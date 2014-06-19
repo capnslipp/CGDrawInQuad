@@ -7,7 +7,15 @@
 @interface OutlineView () {
 	CGPoint *_points;
 	NSUInteger _pointCount;
+	
+	CGPathRef _path;
+	BOOL _needsPathUpdate;
+	
+	CGAffineTransform _pointToScreenCoordTransform;
 }
+
+@property (nonatomic) CGPathRef path;
+@property (readonly, nonatomic) CGAffineTransform pointToScreenCoordTransform;
 
 @end
 
@@ -15,6 +23,7 @@
 @implementation OutlineView
 
 @synthesize lineColor=_lineColor, lineWidth=_lineWidth;
+@synthesize pointToScreenCoordTransform=_pointToScreenCoordTransform;
 
 - (UIColor *)lineColor {
 	if (_lineColor == nil)
@@ -29,6 +38,44 @@
 	return _lineWidth;
 }
 
+- (void)regenPointToScreenCoordTransform
+{
+	CGRect bounds = self.bounds;
+	CGAffineTransform newTransform = CGAffineTransformMakeScale(bounds.size.width, bounds.size.height);
+	//newTransform = CGAffineTransformTranslate(newTransform, bounds.origin.x, bounds.origin.y); // necessary?
+	_pointToScreenCoordTransform = newTransform;
+}
+
+- (void)setBounds:(CGRect)bounds
+{
+	[super setBounds:bounds];
+	
+	[self regenPointToScreenCoordTransform];
+}
+
+- (void)setNeedsPathUpdate {
+	_needsPathUpdate = YES;
+}
+
+- (CGPathRef)path
+{
+	if (_path == nil)
+		_needsPathUpdate = YES;
+	
+	if (_needsPathUpdate) {
+		CGMutablePathRef newPath = CGPathCreateMutable();
+		
+		CGAffineTransform transform = self.pointToScreenCoordTransform;
+		CGPathAddLines(newPath, &transform, _points, _pointCount);
+		CGPathCloseSubpath(newPath);
+		
+		CGPathRelease(_path);
+		_path = newPath;
+		_needsPathUpdate = NO;
+	}
+	return _path;
+}
+
 - (id)initWithFrame:(CGRect)frame
 {
 	self = [super initWithFrame:frame];
@@ -36,6 +83,7 @@
 		return nil;
 	
 	[self initSuperOverrides];
+	[self regenPointToScreenCoordTransform];
 	
 	return self;
 }
@@ -43,6 +91,7 @@
 - (void)awakeFromNib
 {
 	[self initSuperOverrides];
+	[self regenPointToScreenCoordTransform];
 }
 
 - (void)dealloc
@@ -80,6 +129,7 @@
 	if (idx < _pointCount) {
 		_points[idx] = point;
 		
+		[self setNeedsPathUpdate];
 		[self setNeedsDisplay];
 	}
 	else if (idx == _pointCount) {
@@ -90,6 +140,7 @@
 		
 		_pointCount = newPointCount;
 		
+		[self setNeedsPathUpdate];
 		[self setNeedsDisplay];
 	}
 	else {
@@ -109,29 +160,14 @@
 	
 	CGRect boundsRect = self.bounds;
 	BOOL isDrawRectAPortionOfBounds = !CGRectEqualToRect(CGRectIntersection(boundsRect, rect), boundsRect);
-	if (isDrawRectAPortionOfBounds) {
+	if (isDrawRectAPortionOfBounds)
 		CGContextClipToRect(context, rect);
-	}
 	
-	CGRect bounds = self.bounds;
-	
-	CGPoint *pointsInScreenCoords = malloc(sizeof(CGPoint) * _pointCount);
-	for (int pointI = 0; pointI < _pointCount; ++pointI) {
-		pointsInScreenCoords[pointI] = CGPointMake(
-			_points[pointI].x * bounds.size.width,
-			_points[pointI].y * bounds.size.height
-		);
-	}
-	
-	CGContextBeginPath(context);
-	CGContextAddLines(context, pointsInScreenCoords, _pointCount);
-	CGContextClosePath(context);
+	CGContextAddPath(context, self.path);
 	
 	[self.lineColor setStroke];
 	CGContextSetLineWidth(context, self.lineWidth);
 	CGContextStrokePath(context);
-	
-	free(pointsInScreenCoords);
 }
 
 - (void)initSuperOverrides
