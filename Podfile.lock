@@ -1,0 +1,10 @@
+PODS:
+  - UIView+draggable (0.2)
+
+DEPENDENCIES:
+  - UIView+draggable
+
+SPEC CHECKSUMS:
+  UIView+draggable: ad1c3a0f862aca1923c45c3e05d68c7852014436
+
+COCOAPODS: 0.32.1
