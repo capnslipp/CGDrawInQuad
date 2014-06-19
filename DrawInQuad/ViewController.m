@@ -50,14 +50,14 @@
 	self.outlineView[3] = [NSValue valueWithCGPoint:point];
 }
 
-size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
+size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
 {
 	ViewController *self = (__bridge ViewController *)info;
+	char *byteBuffer = (char *)buffer;
+	
 	unsigned int width = self->_destImageWidth,
 		height = self->_destImageHeight,
 		pixelCount = width * height;
-	
-	char *byteBuffer = (char *)buffer;
 	
 	unsigned int pixelIndex = (unsigned int)(position / 4);
 	if (pixelIndex >= pixelCount)
@@ -73,13 +73,13 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	switch (pixelByteOffset)
 	{
 		case 0:
-			byteBuffer[0] = 0;
+			byteBuffer[0] = (char)(255 * pixelU);
 		case 1:
-			byteBuffer[1] = 0;
+			byteBuffer[1] = (char)(255 * pixelV);
 		case 2:
 			byteBuffer[2] = 0;
 		case 3:
-			byteBuffer[3] = 0;
+			byteBuffer[3] = 255;
 			break;
 		
 		default:
@@ -89,20 +89,45 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	return byteCount;
 }
 
+size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, size_t count)
+{
+	ViewController *self = (__bridge ViewController *)info;
+	char *byteBuffer = (char *)buffer;
+	
+	unsigned int width = self->_destImageWidth,
+		height = self->_destImageHeight,
+		pixelCount = width * height;
+	
+	size_t byteCount = pixelCount * 4;
+	if (count < byteCount)
+		byteCount = count;
+	
+	size_t remainingByteCount = byteCount;
+	while (remainingByteCount > 0) {
+		size_t bytesGenerated = genDestImagePixelBytesAtPosition(info, &byteBuffer[position], position, remainingByteCount);
+		
+		position += bytesGenerated;
+		remainingByteCount -= bytesGenerated;
+	}
+	
+	return byteCount;
+}
+
 - (UIImage *)destImage
 {
 	if (!_destImage) {
-		CGSize srcImageSize = _srcImage.size;
-		_destImageWidth = srcImageSize.width;
-		_destImageHeight = srcImageSize.height;
+		CGSize destBoundsSize = self.imageView.bounds.size;
+		CGFloat destScale = UIScreen.mainScreen.scale;
+		unsigned int width = _destImageWidth = destBoundsSize.width * destScale,
+			height = _destImageHeight = destBoundsSize.height * destScale;
 		
 		CGImageRef srcCGImage = _srcImage.CGImage;
 		
 		size_t bitsPerComponent = CGImageGetBitsPerComponent(srcCGImage);
 		size_t bitsPerPixel = bitsPerComponent * 4;
-		size_t bitsPerRow = bitsPerPixel * _destImageWidth,
+		size_t bitsPerRow = bitsPerPixel * width,
 			bytesPerRow = bitsPerRow >> 3;
-		_destImageTotalBytes = bytesPerRow * _destImageHeight;
+		_destImageTotalBytes = bytesPerRow * height;
 		
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		CGDataProviderRef dataProvider = CGDataProviderCreateDirect(
@@ -118,7 +143,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		);
 		
 		CGImageRef destCGImage = CGImageCreate(
-			_destImageWidth, _destImageHeight,
+			width, height,
 			bitsPerComponent, bitsPerPixel, bytesPerRow,
 			colorSpace,
 			kCGBitmapByteOrderDefault | kCGImageAlphaLast,
@@ -140,6 +165,8 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 {
     [super viewDidLoad];
 	
+	_srcImage = [UIImage imageNamed:@"test"];
+	
 	self.point1 = CGPointMake(0.0, 0.0);
 	self.point2 = CGPointMake(0.1, 0.9);
 	self.point3 = CGPointMake(1.0, 1.0);
@@ -150,10 +177,6 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[self.handle2 enableDragging];
 	[self.handle3 enableDragging];
 	[self.handle4 enableDragging];
-	
-	_srcImage = [UIImage imageNamed:@"test"];
-	
-	_imageView.image = self.destImage;
 }
 
 - (void)didReceiveMemoryWarning
