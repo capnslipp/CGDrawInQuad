@@ -13,7 +13,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="NpS-gC-aWB">
-                                <rect key="frame" x="40" y="40" width="688" height="944"/>
+                                <rect key="frame" x="60" y="60" width="648" height="904"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <accessibility key="accessibilityConfiguration">
@@ -21,7 +21,7 @@
                                 </accessibility>
                             </imageView>
                             <view opaque="NO" contentMode="scaleToFill" id="Asf-hn-dKL" customClass="OutlineView">
-                                <rect key="frame" x="40" y="40" width="688" height="944"/>
+                                <rect key="frame" x="60" y="60" width="648" height="904"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" none="YES" notEnabled="YES"/>
