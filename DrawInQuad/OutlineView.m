@@ -119,7 +119,7 @@
 	for (int pointI = 0; pointI < _pointCount; ++pointI) {
 		pointsInScreenCoords[pointI] = CGPointMake(
 			_points[pointI].x * bounds.size.width,
-			_points[pointI].x * bounds.size.height
+			_points[pointI].y * bounds.size.height
 		);
 	}
 	
