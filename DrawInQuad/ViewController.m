@@ -224,6 +224,28 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 
 - (IBAction)draggedHandle:(id)sender
 {
+	UIButton *buttonSender = (UIButton *)sender;
+	CGRect allowedRegion = self.imageView.frame;
+	CGPoint senderCenter = buttonSender.center;
+	if (!CGRectContainsPoint(allowedRegion, senderCenter)) {
+		CGPoint closestInRegionPoint = senderCenter;
+		
+		CGPoint minAllowed = CGPointMake(CGRectGetMinX(allowedRegion), CGRectGetMinY(allowedRegion)),
+			maxAllowed = CGPointMake(CGRectGetMaxX(allowedRegion), CGRectGetMaxY(allowedRegion));
+		
+		if (closestInRegionPoint.x < minAllowed.x)
+			closestInRegionPoint.x = minAllowed.x;
+		else if (closestInRegionPoint.x > maxAllowed.x)
+			closestInRegionPoint.x = maxAllowed.x;
+		
+		if (closestInRegionPoint.y < minAllowed.y)
+			closestInRegionPoint.y = minAllowed.y;
+		else if (closestInRegionPoint.y > maxAllowed.y)
+			closestInRegionPoint.y = maxAllowed.y;
+		
+		buttonSender.center = senderCenter = closestInRegionPoint;
+	}
+	
 	if (sender == self.handle1)
 		self.point1 = [self pointFromHandleCenter:self.handle1.center];
 	else if (sender == self.handle2)
