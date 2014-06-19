@@ -167,6 +167,7 @@
 	
 	[self.lineColor setStroke];
 	CGContextSetLineWidth(context, self.lineWidth);
+	CGContextSetLineDash(context, 0, (CGFloat[2]){ 2.0f, 3.0f }, 2);
 	CGContextStrokePath(context);
 }
 
