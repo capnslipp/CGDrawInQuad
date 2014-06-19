@@ -29,6 +29,21 @@
 	return _lineWidth;
 }
 
+- (id)initWithFrame:(CGRect)frame
+{
+	self = [super initWithFrame:frame];
+	if (!self)
+		return nil;
+	
+	[self initSuperOverrides];
+	
+	return self;
+}
+
+- (void)awakeFromNib
+{
+	[self initSuperOverrides];
+}
 
 - (void)dealloc
 {
@@ -119,14 +134,20 @@
 	free(pointsInScreenCoords);
 }
 
-- (BOOL)clearsContextBeforeDrawing {
-	return YES;
+- (void)initSuperOverrides
+{
+	super.clearsContextBeforeDrawing = [self clearsContextBeforeDrawing];
+	super.opaque = [self opaque];
+	super.backgroundColor = [self backgroundColor];
 }
-- (BOOL)opaque {
-	return NO;
-}
-- (UIColor *)backgroundColor {
-	return nil;
-}
+
+- (BOOL)clearsContextBeforeDrawing { return YES; }
+- (void)setClearsContextBeforeDrawing:(BOOL)clearsContextBeforeDrawing {}
+
+- (BOOL)opaque { return NO; }
+- (void)setOpaque:(BOOL)opaque {}
+
+- (UIColor *)backgroundColor { return nil; }
+- (void)setBackgroundColor:(UIColor *)backgroundColor {}
 
 @end
