@@ -53,8 +53,17 @@
 	[self regenPointToScreenCoordTransform];
 }
 
-- (void)setNeedsPathUpdate {
+- (void)layoutSubviews
+{
+	[super layoutSubviews];
+	
+	[self setNeedsPathUpdate];
+}
+
+- (void)setNeedsPathUpdate
+{
 	_needsPathUpdate = YES;
+	[self setNeedsDisplay];
 }
 
 - (CGPathRef)path
@@ -130,7 +139,6 @@
 		_points[idx] = point;
 		
 		[self setNeedsPathUpdate];
-		[self setNeedsDisplay];
 	}
 	else if (idx == _pointCount) {
 		NSUInteger newPointCount = _pointCount + 1;
@@ -141,7 +149,6 @@
 		_pointCount = newPointCount;
 		
 		[self setNeedsPathUpdate];
-		[self setNeedsDisplay];
 	}
 	else {
 		[NSException raise:NSRangeException

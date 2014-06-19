@@ -64,6 +64,7 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 		return 0;
 	unsigned int pixelX = pixelIndex % width,
 		pixelY = pixelIndex / width;
+	
 	CGFloat pixelU = (CGFloat)pixelX / width,
 		pixelV = (CGFloat)pixelY / height;
 	
@@ -163,7 +164,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 
 - (void)viewDidLoad
 {
-    [super viewDidLoad];
+	[super viewDidLoad];
 	
 	_srcImage = [UIImage imageNamed:@"test"];
 	
@@ -171,12 +172,17 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	self.point2 = CGPointMake(0.1, 0.9);
 	self.point3 = CGPointMake(1.0, 1.0);
 	self.point4 = CGPointMake(0.9, 0.1);
-	[self pointsDidChange];
 	
 	[self.handle1 enableDragging];
 	[self.handle2 enableDragging];
 	[self.handle3 enableDragging];
 	[self.handle4 enableDragging];
+}
+
+- (void)viewDidLayoutSubviews
+{
+	[self pointsDidChange];
+	[self.outlineView setNeedsLayout];
 }
 
 - (void)didReceiveMemoryWarning
@@ -192,10 +198,13 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	}];
 }
 
+- (CGRect)handleBounds {
+	return self.imageView.frame;
+}
 
 - (CGPoint)handleCenterFromPoint:(CGPoint)point
 {
-	CGRect bounds = self.imageView.frame;
+	CGRect bounds = self.handleBounds;
 	return CGPointMake(
 		bounds.size.width * point.x + bounds.origin.x,
 		bounds.size.height * point.y + bounds.origin.y
@@ -204,7 +213,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 
 - (CGPoint)pointFromHandleCenter:(CGPoint)handleCenter
 {
-	CGRect bounds = self.imageView.frame;
+	CGRect bounds = self.handleBounds;
 	return CGPointMake(
 		(handleCenter.x - bounds.origin.x) / bounds.size.width,
 		(handleCenter.y - bounds.origin.y) / bounds.size.height
