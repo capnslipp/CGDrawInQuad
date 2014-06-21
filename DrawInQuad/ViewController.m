@@ -32,6 +32,9 @@ static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vec
 
 @interface ViewController () {
 	UIImage *_srcImage;
+	CFDataRef _srcData;
+	size_t _srcWidth, _srcHeight;
+	
 	UIImage *_destImage;
 	
 	size_t _destImageTotalBytes;
@@ -116,7 +119,7 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
 {
 	ViewController *self = (__bridge ViewController *)info;
-	char *byteBuffer = (char *)buffer;
+	UInt8 *byteBuffer = (UInt8 *)buffer;
 	
 	unsigned int width = self->_destImageWidth,
 		height = self->_destImageHeight,
@@ -149,16 +152,27 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	unsigned int pixelByteOffset = position % 4;
 	size_t byteCount = 4 - pixelByteOffset;
 	
+	size_t nearestTexelXY[2] = {
+		roundf(texelUV.s * self->_srcWidth),
+		roundf(texelUV.t * self->_srcHeight),
+	};
+	UInt8 nearestTexelSample[4];
+	CFDataGetBytes(
+		self->_srcData,
+		CFRangeMake(nearestTexelXY[1] * self->_srcWidth + nearestTexelXY[0], 4),
+		nearestTexelSample
+	);
+	
 	switch (pixelByteOffset)
 	{
 		case 0:
-			byteBuffer[0] = (char)(255 * texelUV.s);
+			byteBuffer[0] = nearestTexelSample[0];
 		case 1:
-			byteBuffer[1] = (char)(255 * texelUV.t);
+			byteBuffer[1] = nearestTexelSample[1];
 		case 2:
-			byteBuffer[2] = 0;
+			byteBuffer[2] = nearestTexelSample[2];
 		case 3:
-			byteBuffer[3] = 255;
+			byteBuffer[3] = nearestTexelSample[3];
 			break;
 		
 		default:
@@ -171,7 +185,7 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, size_t count)
 {
 	ViewController *self = (__bridge ViewController *)info;
-	char *byteBuffer = (char *)buffer;
+	UInt8 *byteBuffer = (UInt8 *)buffer;
 	
 	unsigned int width = self->_destImageWidth,
 		height = self->_destImageHeight,
@@ -201,6 +215,11 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 			height = _destImageHeight = destBoundsSize.height * destScale;
 		
 		CGImageRef srcCGImage = _srcImage.CGImage;
+		if (!_srcData) {
+			_srcData = CGDataProviderCopyData(CGImageGetDataProvider(srcCGImage));
+			_srcWidth = CGImageGetWidth(srcCGImage);
+			_srcHeight = CGImageGetHeight(srcCGImage);
+		}
 		
 		size_t bitsPerComponent = CGImageGetBitsPerComponent(srcCGImage);
 		size_t bitsPerPixel = bitsPerComponent * 4;
@@ -255,6 +274,12 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[self.handle2 enableDragging];
 	[self.handle3 enableDragging];
 	[self.handle4 enableDragging];
+}
+
+- (void)dealloc
+{
+	CFRelease(_srcData);
+	_srcData = NULL;
 }
 
 - (void)viewDidLayoutSubviews
