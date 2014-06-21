@@ -24,6 +24,7 @@
 		CA50EFFE19515BE90002B467 /* DrawInQuadTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CA50EFFD19515BE90002B467 /* DrawInQuadTests.m */; };
 		CAB131FF19515D0E00DB0363 /* test.png in Resources */ = {isa = PBXBuildFile; fileRef = CAB131FE19515D0E00DB0363 /* test.png */; };
 		CAC663371952509A00930261 /* OutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = CAC663361952509A00930261 /* OutlineView.m */; };
+		D4DAD20519555E48000B6F63 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D4DAD20419555E48000B6F63 /* GLKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +62,7 @@
 		CAB131FE19515D0E00DB0363 /* test.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = test.png; sourceTree = "<group>"; };
 		CAC663351952509A00930261 /* OutlineView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutlineView.h; sourceTree = "<group>"; };
 		CAC663361952509A00930261 /* OutlineView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OutlineView.m; sourceTree = "<group>"; };
+		D4DAD20419555E48000B6F63 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,10 +70,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA50EFD219515BE80002B467 /* CoreGraphics.framework in Frameworks */,
-				CA50EFD419515BE80002B467 /* UIKit.framework in Frameworks */,
-				CA50EFD019515BE80002B467 /* Foundation.framework in Frameworks */,
 				506B3B0F2DDC4318AE29134B /* libPods.a in Frameworks */,
+				CA50EFD219515BE80002B467 /* CoreGraphics.framework in Frameworks */,
+				CA50EFD019515BE80002B467 /* Foundation.framework in Frameworks */,
+				D4DAD20519555E48000B6F63 /* GLKit.framework in Frameworks */,
+				CA50EFD419515BE80002B467 /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,11 +114,12 @@
 		CA50EFCE19515BE80002B467 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				CA50EFCF19515BE80002B467 /* Foundation.framework */,
+				5F4D4E35C4104019A703C2DB /* libPods.a */,
 				CA50EFD119515BE80002B467 /* CoreGraphics.framework */,
+				CA50EFCF19515BE80002B467 /* Foundation.framework */,
+				D4DAD20419555E48000B6F63 /* GLKit.framework */,
 				CA50EFD319515BE80002B467 /* UIKit.framework */,
 				CA50EFF119515BE90002B467 /* XCTest.framework */,
-				5F4D4E35C4104019A703C2DB /* libPods.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

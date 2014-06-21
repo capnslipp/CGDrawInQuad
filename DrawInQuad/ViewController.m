@@ -1,5 +1,32 @@
 #import "ViewController.h"
+
 #import "UIView+draggable.h"
+#if defined(__ARM_NEON__)
+	#include <arm_neon.h>
+#endif
+#import <GLKit/GLKMath.h>
+
+
+/// Just GLKVector2Length() with the sqrt() operation removed.
+static inline float GLKVector2LengthSqr(GLKVector2 vector)
+{
+	#if defined(__ARM_NEON__)
+		float32x2_t v = vmul_f32(
+			*(float32x2_t *)&vector,
+			*(float32x2_t *)&vector
+		);
+		v = vpadd_f32(v, v);
+		return vget_lane_f32(v, 0);
+	#else
+		return vector.v[0] * vector.v[0] + vector.v[1] * vector.v[1];
+	#endif
+}
+
+/// Just GLKVector2Distance() with the sqrt() operation removed.
+static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vectorEnd)
+{
+	return GLKVector2LengthSqr(GLKVector2Subtract(vectorEnd, vectorStart));
+}
 
 
 
@@ -50,6 +77,42 @@
 	self.outlineView[3] = [NSValue valueWithCGPoint:point];
 }
 
+GLKVector2 surfaceSTToTexelUV(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
+{
+	CGFloat distSqrToEachPoint[4] = {
+		GLKVector2DistanceSqr(surfaceST, pointSTs[0]),
+		GLKVector2DistanceSqr(surfaceST, pointSTs[1]),
+		GLKVector2DistanceSqr(surfaceST, pointSTs[2]),
+		GLKVector2DistanceSqr(surfaceST, pointSTs[3]),
+	};
+	CGFloat distSqrSum = distSqrToEachPoint[0] + distSqrToEachPoint[1] + distSqrToEachPoint[2] + distSqrToEachPoint[3];
+	
+	CGFloat distSqrSumReciprocal = 1.0f / distSqrSum;
+	CGFloat weights[4] = {
+		(distSqrSum - distSqrToEachPoint[0]) * distSqrSumReciprocal,
+		(distSqrSum - distSqrToEachPoint[1]) * distSqrSumReciprocal,
+		(distSqrSum - distSqrToEachPoint[2]) * distSqrSumReciprocal,
+		(distSqrSum - distSqrToEachPoint[3]) * distSqrSumReciprocal,
+	};
+	
+	GLKVector2 weightedUVs[4] = {
+		GLKVector2MultiplyScalar(pointUVs[0], weights[0]),
+		GLKVector2MultiplyScalar(pointUVs[1], weights[1]),
+		GLKVector2MultiplyScalar(pointUVs[2], weights[2]),
+		GLKVector2MultiplyScalar(pointUVs[3], weights[3]),
+	};
+	GLKVector2 texelUV = GLKVector2Add(weightedUVs[0],
+		GLKVector2Add(weightedUVs[1],
+			GLKVector2Add(weightedUVs[2], weightedUVs[3])
+		)
+	);
+	return texelUV;
+}
+
+static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
+	return GLKVector2Make(point.x, point.y);
+}
+
 size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
 {
 	ViewController *self = (__bridge ViewController *)info;
@@ -65,8 +128,23 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	unsigned int pixelX = pixelIndex % width,
 		pixelY = pixelIndex / width;
 	
-	CGFloat pixelU = (CGFloat)pixelX / width,
-		pixelV = (CGFloat)pixelY / height;
+	CGPoint points[4] = { self.point1, self.point2, self.point3, self.point4 };
+	
+	GLKVector2 texelUV = surfaceSTToTexelUV(
+		GLKVector2Make((CGFloat)pixelX / width, (CGFloat)pixelY / height),
+		(GLKVector2[4]){
+			GLKVector2FromCGPoint(points[0]),
+			GLKVector2FromCGPoint(points[1]),
+			GLKVector2FromCGPoint(points[2]),
+			GLKVector2FromCGPoint(points[3])
+		},
+		(GLKVector2[4]){
+			GLKVector2Make(0.0f, 0.0f),
+			GLKVector2Make(0.0f, 1.0f),
+			GLKVector2Make(1.0f, 1.0f),
+			GLKVector2Make(1.0f, 0.0f)
+		}
+	);
 	
 	unsigned int pixelByteOffset = position % 4;
 	size_t byteCount = 4 - pixelByteOffset;
@@ -74,9 +152,9 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	switch (pixelByteOffset)
 	{
 		case 0:
-			byteBuffer[0] = (char)(255 * pixelU);
+			byteBuffer[0] = (char)(255 * texelUV.s);
 		case 1:
-			byteBuffer[1] = (char)(255 * pixelV);
+			byteBuffer[1] = (char)(255 * texelUV.t);
 		case 2:
 			byteBuffer[2] = 0;
 		case 3:
