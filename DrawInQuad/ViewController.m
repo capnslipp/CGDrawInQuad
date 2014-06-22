@@ -1,10 +1,13 @@
 #import "ViewController.h"
 
-#import "UIView+draggable.h"
 #if defined(__ARM_NEON__)
 	#include <arm_neon.h>
 #endif
 #import <GLKit/GLKMath.h>
+
+#import "UIView+draggable.h"
+#import "BlocksKit.h"
+#import "QBPopupMenu.h"
 
 
 /// Just GLKVector2Length() with the sqrt() operation removed.
@@ -31,6 +34,10 @@ static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vec
 
 
 @interface ViewController () {
+	NSArray *_srcPossibilityNames;
+	
+	QBPopupMenu *_popupMenu;
+	
 	UIImage *_srcImage;
 	CFDataRef _srcData;
 	size_t _srcWidth, _srcHeight;
@@ -259,11 +266,40 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	return _destImage;
 }
 
+- (void)generateSrcPossibilities
+{
+	NSMutableArray *srcPossibilityNames = [[NSMutableArray alloc] initWithArray:[NSBundle.mainBundle pathsForResourcesOfType:@"png" inDirectory:@""]];
+	[srcPossibilityNames bk_performMap:^(NSString *path) {
+		NSString *fileName = path.pathComponents.lastObject;
+		
+		NSUInteger extensionWithDotLength = path.pathExtension.length; // doesn't yet include the dots
+		if (extensionWithDotLength > 0)
+			++extensionWithDotLength;
+		
+		NSString *name = [fileName substringToIndex:(fileName.length - extensionWithDotLength)];
+		return name;
+	}];
+	[srcPossibilityNames bk_performSelect:^(NSString *name) {
+		return [name hasPrefix:@"src."];
+	}];
+	_srcPossibilityNames = srcPossibilityNames;
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 	
-	_srcImage = [UIImage imageNamed:@"test"];
+	[self generateSrcPossibilities];
+	
+	NSArray *popupMenuItems = [_srcPossibilityNames bk_map:^(NSString *name) {
+		return [QBPopupMenuItem itemWithTitle:name target:self action:@selector(switchToImage:)];
+	}];
+    QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
+    //popupMenu.highlightedColor = [[UIColor colorWithRed:0 green:0.478 blue:1.0 alpha:1.0] colorWithAlphaComponent:0.8];
+	//popupMenu.arrowDirection = QBPopupMenuArrowDirectionDown;
+    _popupMenu = popupMenu;
+	
+	[self switchToImageNamed:_srcPossibilityNames.firstObject];
 	
 	self.point1 = CGPointMake(0.0, 0.0);
 	self.point2 = CGPointMake(0.1, 0.9);
@@ -278,8 +314,10 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 
 - (void)dealloc
 {
-	CFRelease(_srcData);
-	_srcData = NULL;
+	if (_srcData) {
+		CFRelease(_srcData);
+		_srcData = NULL;
+	}
 }
 
 - (void)viewDidLayoutSubviews
@@ -366,6 +404,36 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		self.point3 = [self pointFromHandleCenter:self.handle3.center];
 	else if (sender == self.handle4)
 		self.point4 = [self pointFromHandleCenter:self.handle4.center];
+}
+
+- (IBAction)selectImage:(id)sender
+{
+	UIButton *buttonSender = (UIButton *)sender;
+	
+	[_popupMenu showInView:self.view targetRect:buttonSender.frame animated:YES];
+}
+
+- (void)switchToImage:(QBPopupMenuItem *)sender
+{
+	NSString *imageName = sender.title;
+	[self switchToImageNamed:imageName];
+}
+- (void)switchToImageNamed:(NSString *)imageName
+{
+	if (![_srcPossibilityNames containsObject:imageName])
+		return;
+	
+	_imageSelectionButton.titleLabel.text = imageName;
+	[_imageSelectionButton sizeToFit];
+	
+	_srcImage = [UIImage imageNamed:[imageName stringByAppendingPathExtension:@"png"]];
+	if (_srcData) {
+		CFRelease(_srcData);
+		_srcData = NULL;
+	}
+	_srcWidth = _srcHeight = 0;
+	
+	_destImage = nil;
 }
 
 @end

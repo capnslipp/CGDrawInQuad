@@ -13,13 +13,14 @@
 @property (weak, nonatomic) IBOutlet UIButton *handle2;
 @property (weak, nonatomic) IBOutlet UIButton *handle3;
 @property (weak, nonatomic) IBOutlet UIButton *handle4;
+- (IBAction)draggedHandle:(id)sender;
 
 @property (nonatomic) CGPoint point1;
 @property (nonatomic) CGPoint point2;
 @property (nonatomic) CGPoint point3;
 @property (nonatomic) CGPoint point4;
 
-
-- (IBAction)draggedHandle:(id)sender;
+@property (weak, nonatomic) IBOutlet UIButton *imageSelectionButton;
+- (IBAction)selectImage:(id)sender;
 
 @end

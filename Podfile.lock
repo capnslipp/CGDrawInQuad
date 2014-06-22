@@ -1,10 +1,30 @@
 PODS:
+  - BlocksKit (2.2.3):
+    - BlocksKit/All
+  - BlocksKit/All (2.2.3):
+    - BlocksKit/Core
+    - BlocksKit/DynamicDelegate
+    - BlocksKit/MessageUI
+    - BlocksKit/UIKit
+  - BlocksKit/Core (2.2.3)
+  - BlocksKit/DynamicDelegate (2.2.3)
+  - BlocksKit/MessageUI (2.2.3):
+    - BlocksKit/Core
+    - BlocksKit/DynamicDelegate
+  - BlocksKit/UIKit (2.2.3):
+    - BlocksKit/Core
+    - BlocksKit/DynamicDelegate
+  - QBPopupMenu (2.0)
   - UIView+draggable (0.2)
 
 DEPENDENCIES:
+  - BlocksKit
+  - QBPopupMenu
   - UIView+draggable
 
 SPEC CHECKSUMS:
+  BlocksKit: 07c8a80f04275efac6a5f8b973782489c083a182
+  QBPopupMenu: 9f5eff28425a612881522a65cf50628f02795ad9
   UIView+draggable: ad1c3a0f862aca1923c45c3e05d68c7852014436
 
-COCOAPODS: 0.32.1
+COCOAPODS: 0.33.1

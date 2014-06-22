@@ -2,3 +2,5 @@
 # platform :ios, "6.0"
 
 pod 'UIView+draggable'
+pod 'QBPopupMenu'
+pod 'BlocksKit'

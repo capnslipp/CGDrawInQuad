@@ -87,6 +87,16 @@
                                     <action selector="draggedHandle:" destination="BYZ-38-t0r" eventType="touchDragInside" id="6AB-8e-Cn9"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="bottom" buttonType="roundedRect" lineBreakMode="clip" id="nN6-Ps-P6f">
+                                <rect key="frame" x="20" y="984" width="728" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <state key="normal" title="image-name">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="selectImage:" destination="BYZ-38-t0r" eventType="touchUpInside" id="q9h-DF-HoG"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="0.17000000000000001" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
@@ -95,6 +105,7 @@
                         <outlet property="handle2" destination="ab4-XA-3fF" id="vWu-nn-COD"/>
                         <outlet property="handle3" destination="HLj-ah-FUe" id="By1-Wf-0WZ"/>
                         <outlet property="handle4" destination="sXa-ew-PMQ" id="ECY-V2-zrA"/>
+                        <outlet property="imageSelectionButton" destination="nN6-Ps-P6f" id="602-zD-Jkr"/>
                         <outlet property="imageView" destination="NpS-gC-aWB" id="Jtc-3Y-nB7"/>
                         <outlet property="outlineView" destination="Asf-hn-dKL" id="jbB-a9-ojg"/>
                     </connections>
