@@ -13,26 +13,50 @@
 static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 
 
-/// Just GLKVector2Length() with the sqrt() operation removed.
-static inline float GLKVector2LengthSqr(GLKVector2 vector)
-{
-	#if defined(__ARM_NEON__)
-		float32x2_t v = vmul_f32(
-			*(float32x2_t *)&vector,
-			*(float32x2_t *)&vector
-		);
-		v = vpadd_f32(v, v);
-		return vget_lane_f32(v, 0);
-	#else
-		return vector.v[0] * vector.v[0] + vector.v[1] * vector.v[1];
-	#endif
-}
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
 
-/// Just GLKVector2Distance() with the sqrt() operation removed.
-static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vectorEnd)
-{
-	return GLKVector2LengthSqr(GLKVector2Subtract(vectorEnd, vectorStart));
-}
+	/// Just GLKVector2Length() with the sqrt() operation removed.
+	static inline float GLKVector2LengthSqr(GLKVector2 vector)
+	{
+		#if defined(__ARM_NEON__)
+			float32x2_t v = vmul_f32(
+				*(float32x2_t *)&vector,
+				*(float32x2_t *)&vector
+			);
+			v = vpadd_f32(v, v);
+			return vget_lane_f32(v, 0);
+		#else
+			return vector.v[0] * vector.v[0] + vector.v[1] * vector.v[1];
+		#endif
+	}
+
+	/// Just GLKVector2Distance() with the sqrt() operation removed.
+	static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vectorEnd)
+	{
+		return GLKVector2LengthSqr(GLKVector2Subtract(vectorEnd, vectorStart));
+	}
+
+	static inline int modulo(int dividendA, int divisorN)
+	{
+		if (divisorN < 0) // you can check for divisorN == 0 separately and do what you want
+			return modulo(-dividendA, -divisorN);
+		
+		int ret = dividendA % divisorN;
+		if (ret < 0)
+			ret += divisorN;
+		
+		return ret;
+	}
+
+	#if !defined(CLAMP)
+		#define CLAMP(V,L,H)	(MIN(H, MAX(L, V)))
+	#endif
+	#if !defined(WITHIN)
+		#define WITHIN(V,L,H)	((V)>(L) && (V)<(H))
+	#endif
+
+#pragma clang diagnostic pop
 
 
 
@@ -43,7 +67,7 @@ static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vec
 	
 	UIImage *_srcImage;
 	CFDataRef _srcData;
-	size_t _srcWidth, _srcHeight;
+	int _srcWidth, _srcHeight;
 	
 	UIImage *_destImage;
 	size_t _destImageTotalBytes;
@@ -97,8 +121,14 @@ GLKVector2 surfaceSTToTexelUV(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKV
 		GLKVector2DistanceSqr(surfaceST, pointSTs[2]),
 		GLKVector2DistanceSqr(surfaceST, pointSTs[3]),
 	};
-	CGFloat distSqrSum = distSqrToEachPoint[0] + distSqrToEachPoint[1] + distSqrToEachPoint[2] + distSqrToEachPoint[3];
 	
+	CGFloat distSqrMin = MIN(distSqrToEachPoint[0], MIN(distSqrToEachPoint[1], MIN(distSqrToEachPoint[2], distSqrToEachPoint[3])));
+	distSqrToEachPoint[0] -= distSqrMin;
+	distSqrToEachPoint[1] -= distSqrMin;
+	distSqrToEachPoint[2] -= distSqrMin;
+	distSqrToEachPoint[3] -= distSqrMin;
+	
+	CGFloat distSqrSum = distSqrToEachPoint[0] + distSqrToEachPoint[1] + distSqrToEachPoint[2] + distSqrToEachPoint[3];
 	CGFloat distSqrSumReciprocal = 1.0f / distSqrSum;
 	CGFloat weights[4] = {
 		(distSqrSum - distSqrToEachPoint[0]) * distSqrSumReciprocal,
@@ -125,24 +155,28 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 	return GLKVector2Make(point.x, point.y);
 }
 
+#define GEN_DEST_IMAGE_WRAP_ST 0
+
 size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
 {
+	const int kBytesPerPixel = 4;
+	
 	ViewController *self = (__bridge ViewController *)info;
 	UInt8 *byteBuffer = (UInt8 *)buffer;
 	
-	unsigned int width = self->_destImageWidth,
+	const unsigned int width = self->_destImageWidth,
 		height = self->_destImageHeight,
 		pixelCount = width * height;
 	
-	unsigned int pixelIndex = (unsigned int)(position / 4);
+	const unsigned int pixelIndex = (unsigned int)(position / kBytesPerPixel);
 	if (pixelIndex >= pixelCount)
 		return 0;
-	unsigned int pixelX = pixelIndex % width,
+	const unsigned int pixelX = pixelIndex % width,
 		pixelY = pixelIndex / width;
 	
-	CGPoint points[4] = { self.point1, self.point2, self.point3, self.point4 };
+	const CGPoint points[4] = { self.point1, self.point2, self.point3, self.point4 };
 	
-	GLKVector2 texelUV = surfaceSTToTexelUV(
+	const GLKVector2 texelUV = surfaceSTToTexelUV(
 		GLKVector2Make((CGFloat)pixelX / width, (CGFloat)pixelY / height),
 		(GLKVector2[4]){
 			GLKVector2FromCGPoint(points[0]),
@@ -158,19 +192,31 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 		}
 	);
 	
-	unsigned int pixelByteOffset = position % 4;
-	size_t byteCount = 4 - pixelByteOffset;
+	float nearestTexelXYf[2] = { texelUV.s * self->_srcWidth, texelUV.t * self->_srcHeight };
+	int nearestTexelXY[2] = { roundf(nearestTexelXYf[0]), roundf(nearestTexelXYf[1]) };
+	#if GEN_DEST_IMAGE_WRAP_ST
+		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
+			nearestTexelXY[0] = modulo(nearestTexelXY[0], self->_srcWidth);
+		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
+			nearestTexelXY[1] = modulo(nearestTexelXY[1], self->_srcHeight);
+	#else
+		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
+			nearestTexelXY[0] = CLAMP(nearestTexelXY[0], 0, self->_srcWidth - 1);
+		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
+			nearestTexelXY[1] = CLAMP(nearestTexelXY[1], 0, self->_srcHeight - 1);
+	#endif
 	
-	size_t nearestTexelXY[2] = {
-		roundf(texelUV.s * self->_srcWidth),
-		roundf(texelUV.t * self->_srcHeight),
-	};
+	const int texelIndex = nearestTexelXY[1] * self->_srcWidth + nearestTexelXY[0];
+	
 	UInt8 nearestTexelSample[4];
 	CFDataGetBytes(
 		self->_srcData,
-		CFRangeMake(nearestTexelXY[1] * self->_srcWidth + nearestTexelXY[0], 4),
+		CFRangeMake(texelIndex * kBytesPerPixel, kBytesPerPixel),
 		nearestTexelSample
 	);
+	
+	const unsigned int pixelByteOffset = position % kBytesPerPixel;
+	const size_t byteCount = kBytesPerPixel - pixelByteOffset;
 	
 	switch (pixelByteOffset)
 	{
@@ -226,8 +272,8 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		CGImageRef srcCGImage = _srcImage.CGImage;
 		if (!_srcData) {
 			_srcData = CGDataProviderCopyData(CGImageGetDataProvider(srcCGImage));
-			_srcWidth = CGImageGetWidth(srcCGImage);
-			_srcHeight = CGImageGetHeight(srcCGImage);
+			_srcWidth = (int)CGImageGetWidth(srcCGImage);
+			_srcHeight = (int)CGImageGetHeight(srcCGImage);
 		}
 		
 		size_t bitsPerComponent = CGImageGetBitsPerComponent(srcCGImage);
