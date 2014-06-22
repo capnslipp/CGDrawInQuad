@@ -120,6 +120,11 @@
 
 - (id)objectAtIndexedSubscript:(NSUInteger)idx
 {
+	return [NSValue valueWithCGPoint:[self pointAtIndexedSubscript:idx]];
+}
+
+- (CGPoint)pointAtIndexedSubscript:(NSUInteger)idx
+{
 	if (idx >= _pointCount) {
 		[NSException raise:NSRangeException
 			format:@"Given index (%lu) is out of range; must be less than %lu.",
@@ -128,13 +133,17 @@
 	}
 	
 	CGPoint point = _points[idx];
-	return [NSValue valueWithCGPoint:point];
+	return point;
 }
 
 - (void)setObject:(id)obj atIndexedSubscript:(NSUInteger)idx
 {
 	CGPoint point = ((NSValue *)obj).CGPointValue;
-	
+	[self setPoint:point atIndexedSubscript:idx];
+}
+
+- (void)setPoint:(CGPoint)point atIndexedSubscript:(NSUInteger)idx
+{
 	if (idx < _pointCount) {
 		_points[idx] = point;
 		

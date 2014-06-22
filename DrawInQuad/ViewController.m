@@ -60,29 +60,29 @@ static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vec
 @synthesize imageView=_imageView;
 
 - (CGPoint)point1 {
-	return ((NSValue *)self.outlineView[0]).CGPointValue;
+	return [self.outlineView pointAtIndexedSubscript:0];
 }
 - (CGPoint)point2 {
-	return ((NSValue *)self.outlineView[1]).CGPointValue;
+	return [self.outlineView pointAtIndexedSubscript:1];
 }
 - (CGPoint)point3 {
-	return ((NSValue *)self.outlineView[2]).CGPointValue;
+	return [self.outlineView pointAtIndexedSubscript:2];
 }
 - (CGPoint)point4 {
-	return ((NSValue *)self.outlineView[3]).CGPointValue;
+	return [self.outlineView pointAtIndexedSubscript:3];
 }
 
 - (void)setPoint1:(CGPoint)point {
-	self.outlineView[0] = [NSValue valueWithCGPoint:point];
+	[self.outlineView setPoint:point atIndexedSubscript:0];
 }
 - (void)setPoint2:(CGPoint)point {
-	self.outlineView[1] = [NSValue valueWithCGPoint:point];
+	[self.outlineView setPoint:point atIndexedSubscript:1];
 }
 - (void)setPoint3:(CGPoint)point {
-	self.outlineView[2] = [NSValue valueWithCGPoint:point];
+	[self.outlineView setPoint:point atIndexedSubscript:2];
 }
 - (void)setPoint4:(CGPoint)point {
-	self.outlineView[3] = [NSValue valueWithCGPoint:point];
+	[self.outlineView setPoint:point atIndexedSubscript:3];
 }
 
 GLKVector2 surfaceSTToTexelUV(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
