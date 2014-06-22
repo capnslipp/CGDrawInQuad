@@ -107,29 +107,29 @@ static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 @synthesize imageView=_imageView;
 
 - (CGPoint)point1 {
-	return [self.outlineView pointAtIndexedSubscript:0];
+	return [_outlineView pointAtIndexedSubscript:0];
 }
 - (CGPoint)point2 {
-	return [self.outlineView pointAtIndexedSubscript:1];
+	return [_outlineView pointAtIndexedSubscript:1];
 }
 - (CGPoint)point3 {
-	return [self.outlineView pointAtIndexedSubscript:2];
+	return [_outlineView pointAtIndexedSubscript:2];
 }
 - (CGPoint)point4 {
-	return [self.outlineView pointAtIndexedSubscript:3];
+	return [_outlineView pointAtIndexedSubscript:3];
 }
 
 - (void)setPoint1:(CGPoint)point {
-	[self.outlineView setPoint:point atIndexedSubscript:0];
+	[_outlineView setPoint:point atIndexedSubscript:0];
 }
 - (void)setPoint2:(CGPoint)point {
-	[self.outlineView setPoint:point atIndexedSubscript:1];
+	[_outlineView setPoint:point atIndexedSubscript:1];
 }
 - (void)setPoint3:(CGPoint)point {
-	[self.outlineView setPoint:point atIndexedSubscript:2];
+	[_outlineView setPoint:point atIndexedSubscript:2];
 }
 - (void)setPoint4:(CGPoint)point {
-	[self.outlineView setPoint:point atIndexedSubscript:3];
+	[_outlineView setPoint:point atIndexedSubscript:3];
 }
 
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
