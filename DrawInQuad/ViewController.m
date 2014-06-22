@@ -266,7 +266,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 {
 	if (!_destImage) {
 		CGSize destBoundsSize = self.imageView.bounds.size;
-		CGFloat destScale = 1;//UIScreen.mainScreen.scale;
+		CGFloat destScale = 0.5f;//UIScreen.mainScreen.scale;
 		unsigned int width = _destImageWidth = destBoundsSize.width * destScale,
 			height = _destImageHeight = destBoundsSize.height * destScale;
 		
