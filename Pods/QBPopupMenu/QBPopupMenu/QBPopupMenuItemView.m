@@ -45,11 +45,10 @@
             button.contentMode = UIViewContentModeScaleAspectFit;
             button.titleLabel.font = [UIFont systemFontOfSize:14.0];
             button.imageView.contentMode = UIViewContentModeScaleAspectFit;
-            [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            [button setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
             
             button;
         });
+		self.textColor = [UIColor whiteColor];
         [self addSubview:self.button];
         
         // Property settings
@@ -88,6 +87,17 @@
     
     // Update
     [self configureButton];
+}
+
+- (UIColor *)textColor
+{
+	return [self.button titleColorForState:UIControlStateNormal];
+}
+
+- (void)setTextColor:(UIColor *)textColor
+{
+	[self.button setTitleColor:textColor forState:UIControlStateNormal];
+	[self.button setTitleColor:textColor forState:UIControlStateHighlighted];
 }
 
 

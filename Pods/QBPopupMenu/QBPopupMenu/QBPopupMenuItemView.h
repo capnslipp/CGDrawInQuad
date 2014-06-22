@@ -19,6 +19,8 @@
 @property (nonatomic, strong) UIImage *image;
 @property (nonatomic, strong) UIImage *highlightedImage;
 
+@property (nonatomic, strong) UIColor *textColor;
+
 @property (nonatomic, strong) QBPopupMenuItem *item;
 
 + (instancetype)itemViewWithItem:(QBPopupMenuItem *)item;

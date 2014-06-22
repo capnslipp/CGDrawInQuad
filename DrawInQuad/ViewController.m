@@ -295,6 +295,9 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
     QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
     //popupMenu.highlightedColor = [[UIColor colorWithRed:0 green:0.478 blue:1.0 alpha:1.0] colorWithAlphaComponent:0.8];
 	//popupMenu.arrowDirection = QBPopupMenuArrowDirectionDown;
+	popupMenu.color = [UIColor.whiteColor colorWithAlphaComponent:0.9];
+	popupMenu.highlightedColor = self.view.tintColor;
+	popupMenu.textColor = UIColor.blackColor;
 	popupMenu.delegate = self;
     _popupMenu = popupMenu;
 	

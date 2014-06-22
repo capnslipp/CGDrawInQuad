@@ -70,6 +70,7 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
         
         self.color = [[UIColor blackColor] colorWithAlphaComponent:0.8];
         self.highlightedColor = [[UIColor darkGrayColor] colorWithAlphaComponent:0.8];
+		self.textColor = [UIColor whiteColor];
     }
     
     return self;
@@ -94,6 +95,15 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     CGRect frame = self.frame;
     frame.size.height = height;
     self.frame = frame;
+}
+
+- (void)setTextColor:(UIColor *)textColor
+{
+	_textColor = textColor;
+	
+    for (QBPopupMenuItemView *itemView in self.itemViews) {
+		itemView.textColor = self.textColor;
+	}
 }
 
 
@@ -275,6 +285,7 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     for (QBPopupMenuItem *item in self.items) {
         QBPopupMenuItemView *itemView = [[[self class] itemViewClass] itemViewWithItem:item];
         itemView.popupMenu = self;
+		itemView.textColor = self.textColor;
         
         [itemViews addObject:itemView];
     }
