@@ -9,6 +9,10 @@
 #import "BlocksKit.h"
 
 
+
+static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
+
+
 /// Just GLKVector2Length() with the sqrt() operation removed.
 static inline float GLKVector2LengthSqr(GLKVector2 vector)
 {
@@ -303,7 +307,12 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[_imageSelectionButton setTitle:nil forState:UIControlStateHighlighted];
 	[_imageSelectionButton setTitle:nil forState:UIControlStateDisabled];
 	[_imageSelectionButton setTitle:nil forState:UIControlStateSelected];
-	[self switchToImageNamed:_srcPossibilityNames.firstObject];
+	
+	NSString *srcImageName = [NSUserDefaults.standardUserDefaults stringForKey:kLastSrcImageNameKey];
+	if (srcImageName == nil || ![_srcPossibilityNames containsObject:srcImageName])
+		srcImageName = _srcPossibilityNames.firstObject;
+	
+	[self switchToImageNamed:srcImageName];
 	
 	self.point1 = CGPointMake(0.0, 0.0);
 	self.point2 = CGPointMake(0.1, 0.9);
@@ -458,6 +467,8 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	}
 	
 	_destImage = nil;
+	
+	[NSUserDefaults.standardUserDefaults setObject:imageName forKey:kLastSrcImageNameKey];
 }
 
 - (IBAction)redrawNow:(id)sender
