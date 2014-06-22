@@ -301,6 +301,9 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	popupMenu.delegate = self;
     _popupMenu = popupMenu;
 	
+	[_imageSelectionButton setTitle:nil forState:UIControlStateHighlighted];
+	[_imageSelectionButton setTitle:nil forState:UIControlStateDisabled];
+	[_imageSelectionButton setTitle:nil forState:UIControlStateSelected];
 	[self switchToImageNamed:_srcPossibilityNames.firstObject];
 	
 	self.point1 = CGPointMake(0.0, 0.0);
@@ -412,11 +415,9 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	UIButton *imageSelectionButton = self.imageSelectionButton;
 	[UIView animateWithDuration:0.5
 		animations:^{
-			imageSelectionButton.highlighted = YES;
 			imageSelectionButton.selected = YES;
 		}
 		completion:^(BOOL finished) {
-			imageSelectionButton.highlighted = YES;
 			imageSelectionButton.selected = YES;
 		}
 	];
@@ -433,7 +434,6 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	UIButton *imageSelectionButton = self.imageSelectionButton;
 	[UIView animateWithDuration:0.5
 		animations:^{
-			imageSelectionButton.highlighted = NO;
 			imageSelectionButton.selected = NO;
 		}
 	];
@@ -449,7 +449,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	if (![_srcPossibilityNames containsObject:imageName])
 		return;
 	
-	_imageSelectionButton.titleLabel.text = imageName;
+	[_imageSelectionButton setTitle:imageName forState:UIControlStateNormal];
 	[_imageSelectionButton sizeToFit];
 	
 	_srcImage = [UIImage imageNamed:[imageName stringByAppendingPathExtension:@"png"]];
