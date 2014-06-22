@@ -7,7 +7,6 @@
 
 #import "UIView+draggable.h"
 #import "BlocksKit.h"
-#import "QBPopupMenu.h"
 
 
 /// Just GLKVector2Length() with the sqrt() operation removed.
@@ -43,7 +42,6 @@ static inline float GLKVector2DistanceSqr(GLKVector2 vectorStart, GLKVector2 vec
 	size_t _srcWidth, _srcHeight;
 	
 	UIImage *_destImage;
-	
 	size_t _destImageTotalBytes;
 	unsigned int _destImageWidth;
 	unsigned int _destImageHeight;
@@ -297,6 +295,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
     QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
     //popupMenu.highlightedColor = [[UIColor colorWithRed:0 green:0.478 blue:1.0 alpha:1.0] colorWithAlphaComponent:0.8];
 	//popupMenu.arrowDirection = QBPopupMenuArrowDirectionDown;
+	popupMenu.delegate = self;
     _popupMenu = popupMenu;
 	
 	[self switchToImageNamed:_srcPossibilityNames.firstObject];
@@ -368,8 +367,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	self.handle3.center = [self handleCenterFromPoint:self.point3];
 	self.handle4.center = [self handleCenterFromPoint:self.point4];
 	
-	_destImage = nil;
-	_imageView.image = self.destImage; // force refresh, for now
+	[self redrawDestImage];
 }
 
 - (IBAction)draggedHandle:(id)sender
@@ -408,9 +406,34 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 
 - (IBAction)selectImage:(id)sender
 {
-	UIButton *buttonSender = (UIButton *)sender;
+	UIButton *imageSelectionButton = self.imageSelectionButton;
+	[UIView animateWithDuration:0.5
+		animations:^{
+			imageSelectionButton.highlighted = YES;
+			imageSelectionButton.selected = YES;
+		}
+		completion:^(BOOL finished) {
+			imageSelectionButton.highlighted = YES;
+			imageSelectionButton.selected = YES;
+		}
+	];
 	
-	[_popupMenu showInView:self.view targetRect:buttonSender.frame animated:YES];
+	UIView *viewSender = (UIView *)sender;
+	[_popupMenu showInView:self.view targetRect:viewSender.frame animated:YES];
+}
+
+- (void)popupMenuWillDisappear:(QBPopupMenu *)popupMenu
+{
+	if (popupMenu != _popupMenu)
+		return;
+	
+	UIButton *imageSelectionButton = self.imageSelectionButton;
+	[UIView animateWithDuration:0.5
+		animations:^{
+			imageSelectionButton.highlighted = NO;
+			imageSelectionButton.selected = NO;
+		}
+	];
 }
 
 - (void)switchToImage:(QBPopupMenuItem *)sender
@@ -431,9 +454,19 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		CFRelease(_srcData);
 		_srcData = NULL;
 	}
-	_srcWidth = _srcHeight = 0;
 	
 	_destImage = nil;
+}
+
+- (IBAction)redrawNow:(id)sender
+{
+	[self redrawDestImage];
+}
+
+- (void)redrawDestImage
+{
+	_destImage = nil;
+	_imageView.image = self.destImage;
 }
 
 @end

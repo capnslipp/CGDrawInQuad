@@ -87,14 +87,31 @@
                                     <action selector="draggedHandle:" destination="BYZ-38-t0r" eventType="touchDragInside" id="6AB-8e-Cn9"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="bottom" buttonType="roundedRect" lineBreakMode="clip" id="nN6-Ps-P6f">
-                                <rect key="frame" x="20" y="984" width="728" height="20"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <state key="normal" title="image-name">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="lFf-kq-izI">
+                                <rect key="frame" x="659" y="984" width="89" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Redraw Now">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
-                                    <action selector="selectImage:" destination="BYZ-38-t0r" eventType="touchUpInside" id="q9h-DF-HoG"/>
+                                    <action selector="redrawNow:" destination="BYZ-38-t0r" eventType="touchUpInside" id="biB-AG-IVC"/>
+                                </connections>
+                            </button>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Image:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="kgr-Kq-pet">
+                                <rect key="frame" x="20" y="984" width="47" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="2UR-LA-g2V">
+                                <rect key="frame" x="75" y="984" width="96" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="{image-name}">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="selectImage:" destination="BYZ-38-t0r" eventType="touchUpInside" id="GiC-e4-NyB"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -105,7 +122,7 @@
                         <outlet property="handle2" destination="ab4-XA-3fF" id="vWu-nn-COD"/>
                         <outlet property="handle3" destination="HLj-ah-FUe" id="By1-Wf-0WZ"/>
                         <outlet property="handle4" destination="sXa-ew-PMQ" id="ECY-V2-zrA"/>
-                        <outlet property="imageSelectionButton" destination="nN6-Ps-P6f" id="602-zD-Jkr"/>
+                        <outlet property="imageSelectionButton" destination="2UR-LA-g2V" id="13q-qP-KXH"/>
                         <outlet property="imageView" destination="NpS-gC-aWB" id="Jtc-3Y-nB7"/>
                         <outlet property="outlineView" destination="Asf-hn-dKL" id="jbB-a9-ojg"/>
                     </connections>

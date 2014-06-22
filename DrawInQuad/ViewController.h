@@ -2,9 +2,10 @@
 
 #import "OutlineView.h"
 
+#import "QBPopupMenu.h"
 
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController <QBPopupMenuDelegate>
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
 @property (weak, nonatomic) IBOutlet OutlineView *outlineView;
@@ -22,5 +23,7 @@
 
 @property (weak, nonatomic) IBOutlet UIButton *imageSelectionButton;
 - (IBAction)selectImage:(id)sender;
+
+- (IBAction)redrawNow:(id)sender;
 
 @end
