@@ -11,10 +11,11 @@
 
 
 static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
+static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+#pragma clang diagnostic ignored "-Wunused-function"
 
 	/// Just GLKVector2Length() with the sqrt() operation removed.
 	static inline float GLKVector2LengthSqr(GLKVector2 vector)
@@ -92,6 +93,8 @@ static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 	size_t _destImageTotalBytes;
 	unsigned int _destImageWidth;
 	unsigned int _destImageHeight;
+	
+	BOOL _wrapUVs;
 }
 
 - (CGPoint)handleCenterFromPoint:(CGPoint)point;
@@ -152,8 +155,6 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 	return GLKVector2Make(point.x, point.y);
 }
 
-#define GEN_DEST_IMAGE_WRAP_ST 0
-
 size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
 {
 	const int kBytesPerPixel = 4;
@@ -193,17 +194,18 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 		roundf(texelUV.s * self->_srcWidth - 0.5f),
 		roundf(texelUV.t * self->_srcHeight - 0.5f)
 	};
-	#if GEN_DEST_IMAGE_WRAP_ST
+	if (self->_wrapUVs) {
 		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
 			nearestTexelXY[0] = modulo(nearestTexelXY[0], self->_srcWidth);
 		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
 			nearestTexelXY[1] = modulo(nearestTexelXY[1], self->_srcHeight);
-	#else
+	}
+	else {
 		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
 			nearestTexelXY[0] = CLAMP(nearestTexelXY[0], 0, self->_srcWidth - 1);
 		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
 			nearestTexelXY[1] = CLAMP(nearestTexelXY[1], 0, self->_srcHeight - 1);
-	#endif
+	}
 	
 	const int texelIndex = nearestTexelXY[1] * self->_srcWidth + nearestTexelXY[0];
 	
@@ -353,6 +355,12 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[_imageSelectionButton setTitle:nil forState:UIControlStateDisabled];
 	[_imageSelectionButton setTitle:nil forState:UIControlStateSelected];
 	
+	NSNumber *wrapUVsValue = [NSUserDefaults.standardUserDefaults objectForKey:kLastWrapUVsNameKey];
+	if (wrapUVsValue == nil)
+		_wrapUVs = YES;
+	else
+		_wrapUVs = wrapUVsValue.boolValue;
+	
 	NSString *srcImageName = [NSUserDefaults.standardUserDefaults stringForKey:kLastSrcImageNameKey];
 	if (srcImageName == nil || ![_srcPossibilityNames containsObject:srcImageName])
 		srcImageName = _srcPossibilityNames.firstObject;
@@ -368,6 +376,11 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[self.handle2 enableDragging];
 	[self.handle3 enableDragging];
 	[self.handle4 enableDragging];
+	
+	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateHighlighted];
+	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateDisabled];
+	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateSelected];
+	[self updateWrapClampUVsToggleButton];
 }
 
 - (void)dealloc
@@ -525,6 +538,29 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 {
 	_destImage = nil;
 	_imageView.image = self.destImage;
+}
+
+- (IBAction)toggleWrapClamp:(id)sender
+{
+	_wrapUVs = !_wrapUVs;
+	[self updateWrapClampUVsToggleButton];
+	[NSUserDefaults.standardUserDefaults setBool:_wrapUVs forKey:kLastWrapUVsNameKey];
+	
+	[self redrawDestImage];
+}
+
+- (void)updateWrapClampUVsToggleButton
+{
+	UIButton *wrapClampUVsToggleButton = self.wrapClampUVsToggleButton;
+	
+	NSString *title = _wrapUVs ? @"Wrapping UVs" : @"Clamping UVs";
+	[wrapClampUVsToggleButton setTitle:title forState:UIControlStateNormal];
+	
+	[wrapClampUVsToggleButton sizeToFit];
+	
+	CGPoint center = wrapClampUVsToggleButton.center;
+	center.x = self.view.bounds.size.width * 0.5f;
+	wrapClampUVsToggleButton.center = center;
 }
 
 @end

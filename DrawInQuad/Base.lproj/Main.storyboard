@@ -114,6 +114,16 @@
                                     <action selector="selectImage:" destination="BYZ-38-t0r" eventType="touchUpInside" id="GiC-e4-NyB"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="clip" id="jAO-pC-qa8">
+                                <rect key="frame" x="314" y="984" width="142" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <state key="normal" title="{wrapping/clamping}">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="toggleWrapClamp:" destination="BYZ-38-t0r" eventType="touchUpInside" id="l1T-Hz-p62"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="0.17000000000000001" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
@@ -125,6 +135,7 @@
                         <outlet property="imageSelectionButton" destination="2UR-LA-g2V" id="13q-qP-KXH"/>
                         <outlet property="imageView" destination="NpS-gC-aWB" id="Jtc-3Y-nB7"/>
                         <outlet property="outlineView" destination="Asf-hn-dKL" id="jbB-a9-ojg"/>
+                        <outlet property="wrapClampUVsToggleButton" destination="jAO-pC-qa8" id="hVp-iV-u4m"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
