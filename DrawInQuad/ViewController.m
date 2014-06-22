@@ -55,6 +55,25 @@ static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 	#if !defined(WITHIN)
 		#define WITHIN(V,L,H)	((V)>(L) && (V)<(H))
 	#endif
+	
+	static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 *out_nearestPoint)
+	{
+		GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
+		GLKVector2 freeToADelta = GLKVector2Subtract(freePoint, segmentAPoint);
+		
+		float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / GLKVector2LengthSqr(segmentDelta);
+		
+		if (out_nearestPoint != NULL) {
+			if (ratioAlongSegment <= 0.0f)
+				*out_nearestPoint = segmentAPoint;
+			else if (ratioAlongSegment >= 1.0f)
+				*out_nearestPoint = segmentBPoint;
+			else
+				*out_nearestPoint = GLKVector2Add(segmentAPoint, GLKVector2MultiplyScalar(segmentDelta, ratioAlongSegment));
+		}
+		
+		return ratioAlongSegment;
+	}
 
 #pragma clang diagnostic pop
 
@@ -113,41 +132,19 @@ static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 	[self.outlineView setPoint:point atIndexedSubscript:3];
 }
 
+/// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
+/// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
+/// 	Seems to show better results when the left and right sides of the points quad are parallel.
 GLKVector2 surfaceSTToTexelUV(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
 {
-	CGFloat distSqrToEachPoint[4] = {
-		GLKVector2DistanceSqr(surfaceST, pointSTs[0]),
-		GLKVector2DistanceSqr(surfaceST, pointSTs[1]),
-		GLKVector2DistanceSqr(surfaceST, pointSTs[2]),
-		GLKVector2DistanceSqr(surfaceST, pointSTs[3]),
-	};
+	GLKVector2 nearestPointOn03Segment, nearestPointOn12Segment;
+	float ratioAlong03 = ratioAlongSegment(surfaceST, pointSTs[0], pointSTs[3], &nearestPointOn03Segment);
+	float ratioAlong12 = ratioAlongSegment(surfaceST, pointSTs[1], pointSTs[2], &nearestPointOn12Segment);
 	
-	CGFloat distSqrMin = MIN(distSqrToEachPoint[0], MIN(distSqrToEachPoint[1], MIN(distSqrToEachPoint[2], distSqrToEachPoint[3])));
-	distSqrToEachPoint[0] -= distSqrMin;
-	distSqrToEachPoint[1] -= distSqrMin;
-	distSqrToEachPoint[2] -= distSqrMin;
-	distSqrToEachPoint[3] -= distSqrMin;
+	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
+	float ratiosAlong03And12Rebalanced = ratioAlong03 + (ratioAlong12 - ratioAlong03) * ratioBetweenNearest03And12;
 	
-	CGFloat distSqrSum = distSqrToEachPoint[0] + distSqrToEachPoint[1] + distSqrToEachPoint[2] + distSqrToEachPoint[3];
-	CGFloat distSqrSumReciprocal = 1.0f / distSqrSum;
-	CGFloat weights[4] = {
-		(distSqrSum - distSqrToEachPoint[0]) * distSqrSumReciprocal,
-		(distSqrSum - distSqrToEachPoint[1]) * distSqrSumReciprocal,
-		(distSqrSum - distSqrToEachPoint[2]) * distSqrSumReciprocal,
-		(distSqrSum - distSqrToEachPoint[3]) * distSqrSumReciprocal,
-	};
-	
-	GLKVector2 weightedUVs[4] = {
-		GLKVector2MultiplyScalar(pointUVs[0], weights[0]),
-		GLKVector2MultiplyScalar(pointUVs[1], weights[1]),
-		GLKVector2MultiplyScalar(pointUVs[2], weights[2]),
-		GLKVector2MultiplyScalar(pointUVs[3], weights[3]),
-	};
-	GLKVector2 texelUV = GLKVector2Add(weightedUVs[0],
-		GLKVector2Add(weightedUVs[1],
-			GLKVector2Add(weightedUVs[2], weightedUVs[3])
-		)
-	);
+	GLKVector2 texelUV = GLKVector2Make(ratioBetweenNearest03And12, ratiosAlong03And12Rebalanced);
 	return texelUV;
 }
 
@@ -192,8 +189,10 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 		}
 	);
 	
-	float nearestTexelXYf[2] = { texelUV.s * self->_srcWidth, texelUV.t * self->_srcHeight };
-	int nearestTexelXY[2] = { roundf(nearestTexelXYf[0]), roundf(nearestTexelXYf[1]) };
+	int nearestTexelXY[2] = {
+		roundf(texelUV.s * self->_srcWidth - 0.5f),
+		roundf(texelUV.t * self->_srcHeight - 0.5f)
+	};
 	#if GEN_DEST_IMAGE_WRAP_ST
 		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
 			nearestTexelXY[0] = modulo(nearestTexelXY[0], self->_srcWidth);
