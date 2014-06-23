@@ -97,15 +97,6 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     self.frame = frame;
 }
 
-- (void)setTextColor:(UIColor *)textColor
-{
-	_textColor = textColor;
-	
-    for (QBPopupMenuItemView *itemView in self.itemViews) {
-		itemView.textColor = self.textColor;
-	}
-}
-
 
 #pragma mark - Managing Popup Menu
 
@@ -149,11 +140,11 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
             if (maximumWidth < minimumWidth) maximumWidth = minimumWidth;
             break;
             
-        case QBPopupMenuArrowDirectionLeft:
+        case QBPopupMenuArrowDirectionRight:
             maximumWidth = targetRect.origin.x - self.popupMenuInsets.left;
             break;
             
-        case QBPopupMenuArrowDirectionRight:
+        case QBPopupMenuArrowDirectionLeft:
             maximumWidth = view.bounds.size.width - (targetRect.origin.x + targetRect.size.width + self.popupMenuInsets.right);
             break;
             
@@ -283,9 +274,7 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     NSMutableArray *itemViews = [NSMutableArray array];
     
     for (QBPopupMenuItem *item in self.items) {
-        QBPopupMenuItemView *itemView = [[[self class] itemViewClass] itemViewWithItem:item];
-        itemView.popupMenu = self;
-		itemView.textColor = self.textColor;
+        QBPopupMenuItemView *itemView = [[[self class] itemViewClass] itemViewForMenu:self withItem:item];
         
         [itemViews addObject:itemView];
     }
@@ -355,8 +344,8 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     NSUInteger numberOfPages = self.groupedItemViews.count;
     
     if (numberOfPages > 1 && page != 0) {
-        QBPopupMenuPagenatorView *leftPagenatorView = [[[self class] pagenatorViewClass] leftPagenatorViewWithTarget:self action:@selector(showPreviousPage)];
-        
+        QBPopupMenuPagenatorView *leftPagenatorView = [[[self class] pagenatorViewClass] leftPagenatorViewForMenu:self withTarget:self action:@selector(showPreviousPage)];
+		
         [self addSubview:leftPagenatorView];
         [visibleItemViews addObject:leftPagenatorView];
     }
@@ -369,7 +358,7 @@ static const NSTimeInterval kQBPopupMenuAnimationDuration = 0.2;
     }
     
     if (numberOfPages > 1 && page != numberOfPages - 1) {
-        QBPopupMenuPagenatorView *rightPagenatorView = [[[self class] pagenatorViewClass] rightPagenatorViewWithTarget:self action:@selector(showNextPage)];
+        QBPopupMenuPagenatorView *rightPagenatorView = [[[self class] pagenatorViewClass] rightPagenatorViewForMenu:self withTarget:self action:@selector(showNextPage)];
         
         [self addSubview:rightPagenatorView];
         [visibleItemViews addObject:rightPagenatorView];

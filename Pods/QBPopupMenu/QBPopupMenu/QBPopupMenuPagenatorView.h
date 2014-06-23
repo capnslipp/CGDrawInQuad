@@ -20,10 +20,10 @@ typedef NS_ENUM(NSUInteger, QBPopupMenuPagenatorDirection) {
 
 + (CGFloat)pagenatorWidth;
 
-+ (instancetype)leftPagenatorViewWithTarget:(id)target action:(SEL)action;
-+ (instancetype)rightPagenatorViewWithTarget:(id)target action:(SEL)action;
++ (instancetype)leftPagenatorViewForMenu:(QBPopupMenu *)popupMenu withTarget:(id)target action:(SEL)action;
++ (instancetype)rightPagenatorViewForMenu:(QBPopupMenu *)popupMenu withTarget:(id)target action:(SEL)action;
 
-- (instancetype)initWithArrowDirection:(QBPopupMenuPagenatorDirection)arrowDirection target:(id)target action:(SEL)action;
+- (instancetype)initForMenu:(QBPopupMenu *)popupMenu withArrowDirection:(QBPopupMenuPagenatorDirection)arrowDirection target:(id)target action:(SEL)action;
 
 // NOTE: When subclassing this class, use these methods to customize the appearance.
 - (CGMutablePathRef)arrowPathInRect:(CGRect)rect direction:(QBPopupMenuPagenatorDirection)direction CF_RETURNS_RETAINED;

@@ -19,16 +19,18 @@
 
 @implementation QBPopupMenuItemView
 
-+ (instancetype)itemViewWithItem:(QBPopupMenuItem *)item
++ (instancetype)itemViewForMenu:(QBPopupMenu *)popupMenu withItem:(QBPopupMenuItem *)item
 {
-    return [[self alloc] initWithItem:item];
+    return [[self alloc] initForMenu:popupMenu withItem:item];
 }
 
-- (instancetype)initWithItem:(QBPopupMenuItem *)item
+- (instancetype)initForMenu:(QBPopupMenu *)popupMenu withItem:(QBPopupMenuItem *)item
 {
     self = [super initWithFrame:CGRectZero];
     
     if (self) {
+		_popupMenu = popupMenu;
+		
         // View settings
         self.opaque = NO;
         self.backgroundColor = [UIColor clearColor];
@@ -45,10 +47,11 @@
             button.contentMode = UIViewContentModeScaleAspectFit;
             button.titleLabel.font = [UIFont systemFontOfSize:14.0];
             button.imageView.contentMode = UIViewContentModeScaleAspectFit;
+			[self.popupMenu addObserver:self forKeyPath:@"textColor" options:(NSKeyValueObservingOptions)0 context:NULL];
             
             button;
         });
-		self.textColor = [UIColor whiteColor];
+		
         [self addSubview:self.button];
         
         // Property settings
@@ -56,6 +59,20 @@
     }
     
     return self;
+}
+
+- (void)dealloc
+{
+	[self.popupMenu removeObserver:self forKeyPath:@"textColor"];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+	if (object == self.popupMenu && [keyPath isEqualToString:@"textColor"]) {
+		UIColor *newTextColor = self.popupMenu.textColor;
+		[self.button setTitleColor:newTextColor forState:UIControlStateNormal];
+		[self.button setTitleColor:newTextColor forState:UIControlStateHighlighted];
+	}
 }
 
 
@@ -87,17 +104,6 @@
     
     // Update
     [self configureButton];
-}
-
-- (UIColor *)textColor
-{
-	return [self.button titleColorForState:UIControlStateNormal];
-}
-
-- (void)setTextColor:(UIColor *)textColor
-{
-	[self.button setTitleColor:textColor forState:UIControlStateNormal];
-	[self.button setTitleColor:textColor forState:UIControlStateHighlighted];
 }
 
 

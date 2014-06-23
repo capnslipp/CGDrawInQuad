@@ -8,6 +8,8 @@
 
 #import "QBPopupMenuPagenatorView.h"
 
+#import "QBPopupMenu.h"
+
 @implementation QBPopupMenuPagenatorView
 
 + (CGFloat)pagenatorWidth
@@ -15,19 +17,19 @@
     return 10 + 10 * 2;
 }
 
-+ (instancetype)leftPagenatorViewWithTarget:(id)target action:(SEL)action
++ (instancetype)leftPagenatorViewForMenu:(QBPopupMenu *)popupMenu withTarget:(id)target action:(SEL)action
 {
-    return [[self alloc] initWithArrowDirection:QBPopupMenuPagenatorDirectionLeft target:target action:action];
+    return [[self alloc] initForMenu:popupMenu withArrowDirection:QBPopupMenuPagenatorDirectionLeft target:target action:action];
 }
 
-+ (instancetype)rightPagenatorViewWithTarget:(id)target action:(SEL)action
++ (instancetype)rightPagenatorViewForMenu:(QBPopupMenu *)popupMenu withTarget:(id)target action:(SEL)action
 {
-    return [[self alloc] initWithArrowDirection:QBPopupMenuPagenatorDirectionRight target:target action:action];
+    return [[self alloc] initForMenu:popupMenu withArrowDirection:QBPopupMenuPagenatorDirectionRight target:target action:action];
 }
 
-- (instancetype)initWithArrowDirection:(QBPopupMenuPagenatorDirection)arrowDirection target:(id)target action:(SEL)action
+- (instancetype)initForMenu:(QBPopupMenu *)popupMenu withArrowDirection:(QBPopupMenuPagenatorDirection)arrowDirection target:(id)target action:(SEL)action
 {
-    self = [super initWithItem:nil];
+    self = [super initForMenu:(QBPopupMenu *)popupMenu withItem:nil];
     
     if (self) {
         // Property settings
@@ -129,7 +131,7 @@
     CGMutablePathRef path = [self arrowPathInRect:rect direction:direction];
     CGContextAddPath(context, path);
     
-    CGContextSetFillColorWithColor(context, [[UIColor whiteColor] CGColor]);
+    CGContextSetFillColorWithColor(context, [self.popupMenu.textColor CGColor]);
     CGContextFillPath(context);
     
     CGPathRelease(path);
