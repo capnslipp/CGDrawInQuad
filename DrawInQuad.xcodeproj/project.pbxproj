@@ -17,11 +17,6 @@
 		CA50EFE619515BE80002B467 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CA50EFE419515BE80002B467 /* Main.storyboard */; };
 		CA50EFE919515BE80002B467 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CA50EFE819515BE80002B467 /* ViewController.m */; };
 		CA50EFEB19515BE80002B467 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA50EFEA19515BE80002B467 /* Images.xcassets */; };
-		CA50EFF219515BE90002B467 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA50EFF119515BE90002B467 /* XCTest.framework */; };
-		CA50EFF319515BE90002B467 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA50EFCF19515BE80002B467 /* Foundation.framework */; };
-		CA50EFF419515BE90002B467 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA50EFD319515BE80002B467 /* UIKit.framework */; };
-		CA50EFFC19515BE90002B467 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CA50EFFA19515BE90002B467 /* InfoPlist.strings */; };
-		CA50EFFE19515BE90002B467 /* DrawInQuadTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CA50EFFD19515BE90002B467 /* DrawInQuadTests.m */; };
 		CAC663371952509A00930261 /* OutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = CAC663361952509A00930261 /* OutlineView.m */; };
 		D477AA6219563FF0008F8965 /* src.eyes.s512.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5B19563FF0008F8965 /* src.eyes.s512.png */; };
 		D477AA6319563FF0008F8965 /* src.fc3.s128.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5C19563FF0008F8965 /* src.fc3.s128.png */; };
@@ -32,16 +27,6 @@
 		D477AA6819563FF0008F8965 /* src.rg-ramps.s3.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA6119563FF0008F8965 /* src.rg-ramps.s3.png */; };
 		D4DAD20519555E48000B6F63 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D4DAD20419555E48000B6F63 /* GLKit.framework */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		CA50EFF519515BE90002B467 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CA50EFC419515BE80002B467 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = CA50EFCB19515BE80002B467;
-			remoteInfo = DrawInQuad;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		5F4D4E35C4104019A703C2DB /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,11 +45,7 @@
 		CA50EFE719515BE80002B467 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		CA50EFE819515BE80002B467 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		CA50EFEA19515BE80002B467 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		CA50EFF019515BE90002B467 /* DrawInQuadTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DrawInQuadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA50EFF119515BE90002B467 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		CA50EFF919515BE90002B467 /* DrawInQuadTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "DrawInQuadTests-Info.plist"; sourceTree = "<group>"; };
-		CA50EFFB19515BE90002B467 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		CA50EFFD19515BE90002B467 /* DrawInQuadTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DrawInQuadTests.m; sourceTree = "<group>"; };
 		CAC663351952509A00930261 /* OutlineView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutlineView.h; sourceTree = "<group>"; };
 		CAC663361952509A00930261 /* OutlineView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OutlineView.m; sourceTree = "<group>"; };
 		D477AA5B19563FF0008F8965 /* src.eyes.s512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.eyes.s512.png; sourceTree = "<group>"; };
@@ -90,16 +71,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CA50EFED19515BE90002B467 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				CA50EFF219515BE90002B467 /* XCTest.framework in Frameworks */,
-				CA50EFF419515BE90002B467 /* UIKit.framework in Frameworks */,
-				CA50EFF319515BE90002B467 /* Foundation.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -107,7 +78,6 @@
 			isa = PBXGroup;
 			children = (
 				CA50EFD519515BE80002B467 /* DrawInQuad */,
-				CA50EFF719515BE90002B467 /* DrawInQuadTests */,
 				CA50EFCE19515BE80002B467 /* Frameworks */,
 				CA50EFCD19515BE80002B467 /* Products */,
 				6F2B60430C794729BD4D705B /* Pods.xcconfig */,
@@ -118,7 +88,6 @@
 			isa = PBXGroup;
 			children = (
 				CA50EFCC19515BE80002B467 /* DrawInQuad.app */,
-				CA50EFF019515BE90002B467 /* DrawInQuadTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,24 +133,6 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		CA50EFF719515BE90002B467 /* DrawInQuadTests */ = {
-			isa = PBXGroup;
-			children = (
-				CA50EFFD19515BE90002B467 /* DrawInQuadTests.m */,
-				CA50EFF819515BE90002B467 /* Supporting Files */,
-			);
-			path = DrawInQuadTests;
-			sourceTree = "<group>";
-		};
-		CA50EFF819515BE90002B467 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				CA50EFF919515BE90002B467 /* DrawInQuadTests-Info.plist */,
-				CA50EFFA19515BE90002B467 /* InfoPlist.strings */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 		D477AA5819563DEF008F8965 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,24 +169,6 @@
 			productReference = CA50EFCC19515BE80002B467 /* DrawInQuad.app */;
 			productType = "com.apple.product-type.application";
 		};
-		CA50EFEF19515BE90002B467 /* DrawInQuadTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = CA50F00419515BE90002B467 /* Build configuration list for PBXNativeTarget "DrawInQuadTests" */;
-			buildPhases = (
-				CA50EFEC19515BE90002B467 /* Sources */,
-				CA50EFED19515BE90002B467 /* Frameworks */,
-				CA50EFEE19515BE90002B467 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				CA50EFF619515BE90002B467 /* PBXTargetDependency */,
-			);
-			name = DrawInQuadTests;
-			productName = DrawInQuadTests;
-			productReference = CA50EFF019515BE90002B467 /* DrawInQuadTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -243,11 +176,6 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0510;
-				TargetAttributes = {
-					CA50EFEF19515BE90002B467 = {
-						TestTargetID = CA50EFCB19515BE80002B467;
-					};
-				};
 			};
 			buildConfigurationList = CA50EFC719515BE80002B467 /* Build configuration list for PBXProject "DrawInQuad" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -263,7 +191,6 @@
 			projectRoot = "";
 			targets = (
 				CA50EFCB19515BE80002B467 /* DrawInQuad */,
-				CA50EFEF19515BE90002B467 /* DrawInQuadTests */,
 			);
 		};
 /* End PBXProject section */
@@ -283,14 +210,6 @@
 				CA50EFDA19515BE80002B467 /* InfoPlist.strings in Resources */,
 				D477AA6419563FF0008F8965 /* src.red.s128.png in Resources */,
 				D477AA6219563FF0008F8965 /* src.eyes.s512.png in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CA50EFEE19515BE90002B467 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				CA50EFFC19515BE90002B467 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,23 +260,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CA50EFEC19515BE90002B467 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				CA50EFFE19515BE90002B467 /* DrawInQuadTests.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		CA50EFF619515BE90002B467 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = CA50EFCB19515BE80002B467 /* DrawInQuad */;
-			targetProxy = CA50EFF519515BE90002B467 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		CA50EFD819515BE80002B467 /* InfoPlist.strings */ = {
@@ -374,14 +277,6 @@
 				CA50EFE519515BE80002B467 /* Base */,
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		CA50EFFA19515BE90002B467 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				CA50EFFB19515BE90002B467 /* en */,
-			);
-			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -487,46 +382,6 @@
 			};
 			name = Release;
 		};
-		CA50F00519515BE90002B467 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DrawInQuad.app/DrawInQuad";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "DrawInQuad/DrawInQuad-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "DrawInQuadTests/DrawInQuadTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Debug;
-		};
-		CA50F00619515BE90002B467 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DrawInQuad.app/DrawInQuad";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "DrawInQuad/DrawInQuad-Prefix.pch";
-				INFOPLIST_FILE = "DrawInQuadTests/DrawInQuadTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -544,15 +399,6 @@
 			buildConfigurations = (
 				CA50F00219515BE90002B467 /* Debug */,
 				CA50F00319515BE90002B467 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		CA50F00419515BE90002B467 /* Build configuration list for PBXNativeTarget "DrawInQuadTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				CA50F00519515BE90002B467 /* Debug */,
-				CA50F00619515BE90002B467 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

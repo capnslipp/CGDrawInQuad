@@ -1,0 +1,8 @@
+[
+	"-workspace", "DrawInQuad.xcworkspace",
+	"-scheme", "DrawInQuad",
+	"-configuration", "Debug",
+	"-sdk", "iphonesimulator",
+	"-arch", "i386",
+	"ONLY_ACTIVE_ARCH=NO",
+]
