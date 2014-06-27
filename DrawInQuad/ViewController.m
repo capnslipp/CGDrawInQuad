@@ -16,6 +16,8 @@
 static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 
+static const int kComponentCount = 4;
+
 /// nSec: nanoseconds
 uint64_t getAccurateSystemTime_nSec()
 {
@@ -118,7 +120,7 @@ static inline uint32_t nSecsSubSecRemainder(uint64_t nSecs) {
 	}
 
 	/// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
-	static inline GLKVector3 barycentricCoords2(GLKVector2 point, GLKVector2 tri[3])
+	static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVector2 tri[3])
 	{
 		GLKVector2 v0 = GLKVector2Subtract(tri[1], tri[0]),
 			v1 = GLKVector2Subtract(tri[2], tri[0]),
@@ -151,9 +153,8 @@ static inline uint32_t nSecsSubSecRemainder(uint64_t nSecs) {
 	int _srcWidth, _srcHeight;
 	
 	UIImage *_destImage;
-	size_t _destImageTotalBytes;
-	unsigned int _destImageWidth;
-	unsigned int _destImageHeight;
+	size_t _destByteCount;
+	int _destWidth, _destHeight;
 	
 	BOOL _wrapUVs;
 }
@@ -199,7 +200,7 @@ static inline uint32_t nSecsSubSecRemainder(uint64_t nSecs) {
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
 /// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
-GLKVector2 surfaceSTToTexelUV_bilinearQuad(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
+GLKVector2 surfaceSTToTexelUV_bilinearQuad(const GLKVector2 surfaceST, const GLKVector2 pointSTs[4], const GLKVector2 pointUVs[4])
 {
 	GLKVector2 nearestPointOn03Segment, nearestPointOn12Segment;
 	float ratioAlong03 = ratioAlongSegment(surfaceST, pointSTs[0], pointSTs[3], &nearestPointOn03Segment);
@@ -214,7 +215,7 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(GLKVector2 surfaceST, GLKVector2 poin
 	return texelUV;
 }
 
-GLKVector2 surfaceSTToTexelUV_barycentricTri(GLKVector2 surfaceST, GLKVector2 pointSTs[3], GLKVector2 pointUVs[3])
+GLKVector2 surfaceSTToTexelUV_barycentricTri(const GLKVector2 surfaceST, const GLKVector2 pointSTs[3], const GLKVector2 pointUVs[3])
 {
 	GLKVector3 barycentricCoords = barycentricCoords2(surfaceST, pointSTs);
 	
@@ -228,7 +229,7 @@ GLKVector2 surfaceSTToTexelUV_barycentricTri(GLKVector2 surfaceST, GLKVector2 po
 	return texelUV;
 }
 
-GLKVector2 surfaceSTToTexelUV_barycentricQuad(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
+GLKVector2 surfaceSTToTexelUV_barycentricQuad(const GLKVector2 surfaceST, const GLKVector2 pointSTs[4], const GLKVector2 pointUVs[4])
 {
 	static const int kStarboardTriInQuadIndices[3] = { 0, 1, 2 };
 	static const int kPortTriInQuadIndices[3] = { 0, 2, 3 };
@@ -260,15 +261,27 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 	return GLKVector2Make(point.x, point.y);
 }
 
-size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position, size_t requestedByteCount)
+struct DestImageGenInfo {
+	int srcWidth, srcHeight;
+	CFDataRef srcData;
+	
+	int destWidth, destHeight;
+	
+	GLKVector2 points[4];
+	
+	bool wrapUVs;
+};
+
+size_t genDestImagePixelBytesAtPosition(struct DestImageGenInfo *info, void *buffer, off_t position, size_t requestedByteCount)
 {
+	struct DestImageGenInfo genInfo = *info;
+	
 	const int kBytesPerPixel = 4;
 	
-	ViewController *self = (__bridge ViewController *)info;
 	UInt8 *byteBuffer = (UInt8 *)buffer;
 	
-	const unsigned int width = self->_destImageWidth,
-		height = self->_destImageHeight,
+	const unsigned int width = genInfo.destWidth,
+		height = genInfo.destHeight,
 		pixelCount = width * height;
 	
 	const unsigned int pixelIndex = (unsigned int)(position / kBytesPerPixel);
@@ -277,52 +290,48 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	const unsigned int pixelX = pixelIndex % width,
 		pixelY = pixelIndex / width;
 	
-	const CGPoint points[4] = { self.point1, self.point2, self.point3, self.point4 };
-	
+	static const GLKVector2 kPointUVs[4] = {
+		(GLKVector2){ .x = 0.0f, .y = 0.0f },
+		(GLKVector2){ .x = 0.0f, .y = 1.0f },
+		(GLKVector2){ .x = 1.0f, .y = 1.0f },
+		(GLKVector2){ .x = 1.0f, .y = 0.0f },
+	};
 	const GLKVector2 texelUV = surfaceSTToTexelUV_barycentricQuad(
 		GLKVector2Make((CGFloat)pixelX / width, (CGFloat)pixelY / height),
-		(GLKVector2[4]){
-			GLKVector2FromCGPoint(points[0]),
-			GLKVector2FromCGPoint(points[1]),
-			GLKVector2FromCGPoint(points[2]),
-			GLKVector2FromCGPoint(points[3])
-		},
-		(GLKVector2[4]){
-			GLKVector2Make(0.0f, 0.0f),
-			GLKVector2Make(0.0f, 1.0f),
-			GLKVector2Make(1.0f, 1.0f),
-			GLKVector2Make(1.0f, 0.0f)
-		}
+		genInfo.points,
+		kPointUVs
 	);
 	
 	int nearestTexelXY[2] = {
-		roundf(texelUV.s * self->_srcWidth - 0.5f),
-		roundf(texelUV.t * self->_srcHeight - 0.5f)
+		roundf(texelUV.s * genInfo.srcWidth - 0.5f),
+		roundf(texelUV.t * genInfo.srcHeight - 0.5f)
 	};
-	if (self->_wrapUVs) {
-		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
-			nearestTexelXY[0] = modulo(nearestTexelXY[0], self->_srcWidth);
-		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
-			nearestTexelXY[1] = modulo(nearestTexelXY[1], self->_srcHeight);
+	if (genInfo.wrapUVs) {
+		if (!WITHIN(nearestTexelXY[0], 0, genInfo.srcWidth - 1))
+			nearestTexelXY[0] = modulo(nearestTexelXY[0], genInfo.srcWidth);
+		if (!WITHIN(nearestTexelXY[1], 0, genInfo.srcHeight - 1))
+			nearestTexelXY[1] = modulo(nearestTexelXY[1], genInfo.srcHeight);
 	}
 	else {
-		if (!WITHIN(nearestTexelXY[0], 0, self->_srcWidth - 1))
-			nearestTexelXY[0] = CLAMP(nearestTexelXY[0], 0, self->_srcWidth - 1);
-		if (!WITHIN(nearestTexelXY[1], 0, self->_srcHeight - 1))
-			nearestTexelXY[1] = CLAMP(nearestTexelXY[1], 0, self->_srcHeight - 1);
+		if (!WITHIN(nearestTexelXY[0], 0, genInfo.srcWidth - 1))
+			nearestTexelXY[0] = CLAMP(nearestTexelXY[0], 0, genInfo.srcWidth - 1);
+		if (!WITHIN(nearestTexelXY[1], 0, genInfo.srcHeight - 1))
+			nearestTexelXY[1] = CLAMP(nearestTexelXY[1], 0, genInfo.srcHeight - 1);
 	}
 	
-	const int texelIndex = nearestTexelXY[1] * self->_srcWidth + nearestTexelXY[0];
+	const int texelIndex = nearestTexelXY[1] * genInfo.srcWidth + nearestTexelXY[0];
 	
 	UInt8 nearestTexelSample[4];
 	CFDataGetBytes(
-		self->_srcData,
+		genInfo.srcData,
 		CFRangeMake(texelIndex * kBytesPerPixel, kBytesPerPixel),
 		nearestTexelSample
 	);
 	
 	const unsigned int pixelByteOffset = position % kBytesPerPixel;
 	const size_t byteCount = kBytesPerPixel - pixelByteOffset;
+	
+	NSCAssert(kComponentCount == 4, @"This blit only works with 4 components per pixel (RGBA).");
 	
 	switch (pixelByteOffset)
 	{
@@ -347,28 +356,38 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	return byteCount;
 }
 
-size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, size_t count)
+/// Returned image data buffer must be freed with free() by the caller.
+UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], bool wrapUVs, size_t *out_byteCount)
 {
-	ViewController *self = (__bridge ViewController *)info;
-	UInt8 *byteBuffer = (UInt8 *)buffer;
-	
-	unsigned int width = self->_destImageWidth,
-		height = self->_destImageHeight,
-		pixelCount = width * height;
-	
+	unsigned int pixelCount = destWidth * destHeight;
 	size_t byteCount = pixelCount * 4;
-	if (count < byteCount)
-		byteCount = count;
 	
-	size_t remainingByteCount = byteCount;
-	while (remainingByteCount > 0) {
-		size_t bytesGenerated = genDestImagePixelBytesAtPosition(info, &byteBuffer[position], position, remainingByteCount);
+	UInt8 *byteBuffer = malloc(byteCount);
+	
+	struct DestImageGenInfo info = {
+		.srcWidth = srcWidth, .srcHeight = srcHeight,
+		.srcData = srcData,
+		.destWidth = destWidth, .destHeight = destHeight,
+		.wrapUVs = wrapUVs,
+	};
+	info.points[0] = GLKVector2FromCGPoint(points[0]);
+	info.points[1] = GLKVector2FromCGPoint(points[1]);
+	info.points[2] = GLKVector2FromCGPoint(points[2]);
+	info.points[3] = GLKVector2FromCGPoint(points[3]);
+	
+	size_t bytesPerPixel = kComponentCount;
+	
+	for (int pixelI = pixelCount - 1; pixelI >= 0; --pixelI) {
+		off_t position = pixelI * bytesPerPixel;
 		
-		position += bytesGenerated;
-		remainingByteCount -= bytesGenerated;
+		size_t bytesGenerated = genDestImagePixelBytesAtPosition(&info, &byteBuffer[position], position, bytesPerPixel);
+		NSCAssert(bytesGenerated == bytesPerPixel, @"Fewer bytes generated (%zu) than requested (%zu).", bytesGenerated, bytesPerPixel);
 	}
 	
-	return byteCount;
+	if (out_byteCount != NULL)
+		*out_byteCount = byteCount;
+	
+	return byteBuffer;
 }
 
 - (UIImage *)destImage
@@ -376,8 +395,8 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	if (!_destImage) {
 		CGSize destBoundsSize = self.imageView.bounds.size;
 		CGFloat destScale = 0.5f;//UIScreen.mainScreen.scale;
-		unsigned int width = _destImageWidth = destBoundsSize.width * destScale,
-			height = _destImageHeight = destBoundsSize.height * destScale;
+		unsigned int width = _destWidth = (destBoundsSize.width * destScale),
+			height = _destHeight = (destBoundsSize.height * destScale);
 		
 		CGImageRef srcCGImage = _srcImage.CGImage;
 		if (!_srcData) {
@@ -387,26 +406,29 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		}
 		
 		size_t bitsPerComponent = CGImageGetBitsPerComponent(srcCGImage);
-		size_t bitsPerPixel = bitsPerComponent * 4;
+		size_t bitsPerPixel = bitsPerComponent * kComponentCount;
 		size_t bitsPerRow = bitsPerPixel * width,
 			bytesPerRow = bitsPerRow >> 3;
-		_destImageTotalBytes = bytesPerRow * height;
+		_destByteCount = bytesPerRow * height;
 		
 		uint64_t startTime_nSec = getAccurateSystemTime_nSec();
 		
-		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-		CGDataProviderRef dataProvider = CGDataProviderCreateDirect(
-			(__bridge void *)self,
-			_destImageTotalBytes,
-			&((CGDataProviderDirectCallbacks){
-				.version = 0,
-				.getBytePointer = NULL,
-				.releaseBytePointer = NULL,
-				.getBytesAtPosition = genDestImageBytesAtPosition,
-				.releaseInfo = NULL
-			})
+		size_t createdByteCount = 0;
+		UInt8 *imageData = createDestImageData(
+			_srcWidth, _srcHeight, _srcData,
+			_destWidth, _destHeight,
+			(CGPoint[4]){ self.point1, self.point2, self.point3, self.point4 },
+			_wrapUVs,
+			&createdByteCount
 		);
+		NSAssert(createdByteCount == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
 		
+		// The advange of using a CFData with CGDataProviderCreateWithCFData() over CGDataProviderCreateWithData() is that the data is ref-counted, and in this function we can release-it-and-forget-it.
+		// Specifically: `imageData` is now owned by `data`, which after this function's scope is owned by `dataProvider` which is owned by `destCGImage`, which is owned by `_destImage`.
+		CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, imageData, createdByteCount, kCFAllocatorMalloc);
+		CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData(data);
+		
+		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		CGImageRef destCGImage = CGImageCreate(
 			width, height,
 			bitsPerComponent, bitsPerPixel, bytesPerRow,
@@ -419,9 +441,10 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		);
 		_destImage = [[UIImage alloc] initWithCGImage:destCGImage];
 		CGImageRelease(destCGImage);
+		CGColorSpaceRelease(colorSpace);
 		
 		CGDataProviderRelease(dataProvider);
-		CGColorSpaceRelease(colorSpace);
+		CFRelease(data);
 		
 		uint64_t endTime_nSec = getAccurateSystemTime_nSec();
 		
