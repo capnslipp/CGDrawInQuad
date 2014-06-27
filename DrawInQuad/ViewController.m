@@ -180,10 +180,12 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(GLKVector2 surfaceST, GLKVector2 poin
 	float ratioAlong03 = ratioAlongSegment(surfaceST, pointSTs[0], pointSTs[3], &nearestPointOn03Segment);
 	float ratioAlong12 = ratioAlongSegment(surfaceST, pointSTs[1], pointSTs[2], &nearestPointOn12Segment);
 	
-	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
-	float ratiosAlong03And12Rebalanced = ratioAlong03 + (ratioAlong12 - ratioAlong03) * ratioBetweenNearest03And12;
+	GLKVector2 nearestPointOn03SegmentUV = GLKVector2Lerp(pointUVs[0], pointUVs[3], ratioAlong03);
+	GLKVector2 nearestPointOn12SegmentUV = GLKVector2Lerp(pointUVs[1], pointUVs[2], ratioAlong12);
 	
-	GLKVector2 texelUV = GLKVector2Make(ratioBetweenNearest03And12, ratiosAlong03And12Rebalanced);
+	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
+	
+	GLKVector2 texelUV = GLKVector2Lerp(nearestPointOn03SegmentUV, nearestPointOn12SegmentUV, ratioBetweenNearest03And12);
 	return texelUV;
 }
 
