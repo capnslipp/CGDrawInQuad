@@ -5,6 +5,9 @@
 #endif
 #import <GLKit/GLKMath.h>
 
+#include <mach/mach_time.h>
+#include <dispatch/dispatch.h>
+
 #import "UIView+draggable.h"
 #import "BlocksKit.h"
 
@@ -12,6 +15,28 @@
 
 static NSString *kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
 static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
+
+/// nSec: nanoseconds
+uint64_t getAccurateSystemTime_nSec()
+{
+	static mach_timebase_info_data_t sTimebaseInfo = {0};
+	
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		mach_timebase_info(&sTimebaseInfo);
+	});
+	
+	uint64_t time_nSec = mach_absolute_time() * sTimebaseInfo.numer / sTimebaseInfo.denom;
+	return time_nSec;
+}
+
+static const uint64_t kNSecsPerSec = 1000000000;
+static inline uint32_t nSecsToSecs(uint64_t nSecs) {
+	return (uint32_t)(nSecs / kNSecsPerSec);
+}
+static inline uint32_t nSecsSubSecRemainder(uint64_t nSecs) {
+	return (uint32_t)(nSecs % kNSecsPerSec);
+}
 
 
 #pragma clang diagnostic push
@@ -367,6 +392,8 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 			bytesPerRow = bitsPerRow >> 3;
 		_destImageTotalBytes = bytesPerRow * height;
 		
+		uint64_t startTime_nSec = getAccurateSystemTime_nSec();
+		
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		CGDataProviderRef dataProvider = CGDataProviderCreateDirect(
 			(__bridge void *)self,
@@ -395,6 +422,15 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 		
 		CGDataProviderRelease(dataProvider);
 		CGColorSpaceRelease(colorSpace);
+		
+		uint64_t endTime_nSec = getAccurateSystemTime_nSec();
+		
+		uint64_t elapsedTime_nSec = endTime_nSec - startTime_nSec;
+		uint32_t elapsedTime_subNSec = nSecsSubSecRemainder(elapsedTime_nSec),
+			elapsedTime_sec = nSecsToSecs(elapsedTime_nSec);
+		double elapsedTime_secD = (double)elapsedTime_sec + ((double)elapsedTime_subNSec / kNSecsPerSec);
+		double elapsedTime_mSecD = elapsedTime_secD * 1000;
+		printf("Redrew %d×%d in %fms.\n", width, height, elapsedTime_mSecD);
 	}
 	return _destImage;
 }
