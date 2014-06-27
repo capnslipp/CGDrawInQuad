@@ -92,6 +92,7 @@ static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 		return ratioAlongSegment;
 	}
 
+	/// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
 	static inline GLKVector3 barycentricCoords2(GLKVector2 point, GLKVector2 tri[3])
 	{
 		GLKVector2 v0 = GLKVector2Subtract(tri[1], tri[0]),
@@ -186,7 +187,6 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(GLKVector2 surfaceST, GLKVector2 poin
 	return texelUV;
 }
 
-/// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
 GLKVector2 surfaceSTToTexelUV_barycentricTri(GLKVector2 surfaceST, GLKVector2 pointSTs[3], GLKVector2 pointUVs[3])
 {
 	GLKVector3 barycentricCoords = barycentricCoords2(surfaceST, pointSTs);
