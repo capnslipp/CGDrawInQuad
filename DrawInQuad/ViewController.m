@@ -451,10 +451,10 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	
 	[self switchToImageNamed:srcImageName];
 	
-	self.point1 = CGPointMake(0.0, 0.0);
-	self.point2 = CGPointMake(0.1, 0.9);
-	self.point3 = CGPointMake(1.0, 1.0);
-	self.point4 = CGPointMake(0.9, 0.1);
+	self.point1 = CGPointMake(0.00f, 0.00f);
+	self.point2 = CGPointMake(0.05f, 0.95f);
+	self.point3 = CGPointMake(0.8f, 0.8f);
+	self.point4 = CGPointMake(0.90f, 0.10f);
 	
 	[self.handle1 enableDragging];
 	[self.handle2 enableDragging];
