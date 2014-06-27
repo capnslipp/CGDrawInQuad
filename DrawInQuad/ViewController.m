@@ -38,6 +38,31 @@ static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 		return GLKVector2LengthSqr(GLKVector2Subtract(vectorEnd, vectorStart));
 	}
 
+	static inline float GLKVector2CrossProduct(GLKVector2 vectorLeft, GLKVector2 vectorRight)
+	{
+		//#if defined(__ARM_NEON__)
+		//	// @fixme: this is the shitty way to do this; involves extra copies
+		//	GLKVector2 v1 = GLKVector2Make(vectorLeft.x, vectorRight.y),
+		//		v2 = GLKVector2Make(vectorLeft.y, vectorRight.x);
+		//	float32x2_t v = vmul_f32(
+		//		*(float32x2_t *)&v1,
+		//		*(float32x2_t *)&v2
+		//	);
+		//	v = vpadd_f32(v, v);
+		//	return vget_lane_f32(v, 0);
+		//#else
+			return vectorLeft.x * vectorRight.y - vectorLeft.y * vectorRight.x;
+		//#endif
+	}
+
+	/// Returns a vector perpendicular to the given vector, rotate 90° counter-clockwise.
+	/// Devised by Hill, F. S. Jr. in Graphics Gems IV (1994).
+	///		@source: http://mathworld.wolfram.com/PerpendicularVector.html
+	static inline GLKVector2 GLKVector2Perp(GLKVector2 vector)
+	{
+		return GLKVector2Make(-vector.y, vector.x);
+	}
+
 	static inline int modulo(int dividendA, int divisorN)
 	{
 		if (divisorN < 0) // you can check for divisorN == 0 separately and do what you want
@@ -74,6 +99,40 @@ static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 		}
 		
 		return ratioAlongSegment;
+	}
+
+	//static inline float barycentricOrient2(GLKVector2 a, GLKVector2 b, GLKVector2 c)
+	//{
+	//	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+	//}
+	//
+	///// @source: http://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/
+	//static inline GLKVector3 barycentricCoords2(GLKVector2 point, GLKVector2 tri[3])
+	//{
+	//	return GLKVector3Make(
+	//		barycentricOrient2(tri[1], tri[2], point),
+	//		barycentricOrient2(tri[2], tri[0], point),
+	//		barycentricOrient2(tri[0], tri[1], point)
+	//	);
+	//}
+
+	static inline GLKVector3 barycentricCoords2(GLKVector2 point, GLKVector2 tri[3])
+	{
+		GLKVector2 v0 = GLKVector2Subtract(tri[1], tri[0]),
+			v1 = GLKVector2Subtract(tri[2], tri[0]),
+			v2 = GLKVector2Subtract(point, tri[0]);
+		
+		float d00 = GLKVector2DotProduct(v0, v0),
+			d01 = GLKVector2DotProduct(v0, v1),
+			d11 = GLKVector2DotProduct(v1, v1),
+			d20 = GLKVector2DotProduct(v2, v0),
+			d21 = GLKVector2DotProduct(v2, v1);
+		
+		float denomReciprocal = 1.0f / (d00 * d11 - d01 * d01);
+		float v = (d11 * d20 - d01 * d21) * denomReciprocal;
+		float w = (d00 * d21 - d01 * d20) * denomReciprocal;
+		
+		return GLKVector3Make(1.0f - v - w, v, w);
 	}
 
 #pragma clang diagnostic pop
@@ -138,17 +197,91 @@ static NSString *kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
 /// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
-GLKVector2 surfaceSTToTexelUV(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
+GLKVector2 surfaceSTToTexelUV_bilinearQuad(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
 {
 	GLKVector2 nearestPointOn03Segment, nearestPointOn12Segment;
 	float ratioAlong03 = ratioAlongSegment(surfaceST, pointSTs[0], pointSTs[3], &nearestPointOn03Segment);
 	float ratioAlong12 = ratioAlongSegment(surfaceST, pointSTs[1], pointSTs[2], &nearestPointOn12Segment);
 	
-	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
-	float ratiosAlong03And12Rebalanced = ratioAlong03 + (ratioAlong12 - ratioAlong03) * ratioBetweenNearest03And12;
+	GLKVector2 nearestPointOn03SegmentUV = GLKVector2Lerp(pointUVs[0], pointUVs[3], ratioAlong03);
+	GLKVector2 nearestPointOn12SegmentUV = GLKVector2Lerp(pointUVs[1], pointUVs[2], ratioAlong12);
 	
-	GLKVector2 texelUV = GLKVector2Make(ratioBetweenNearest03And12, ratiosAlong03And12Rebalanced);
+	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
+	
+	GLKVector2 texelUV = GLKVector2Lerp(nearestPointOn03SegmentUV, nearestPointOn12SegmentUV, ratioBetweenNearest03And12);
 	return texelUV;
+}
+
+/// @source: http://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/
+GLKVector2 surfaceSTToTexelUV_barycentricTri(GLKVector2 surfaceST, GLKVector2 pointSTs[3], GLKVector2 pointUVs[3])
+{
+	GLKVector3 barycentricCoords = barycentricCoords2(surfaceST, pointSTs);
+	
+	GLKVector2 pointUVsPortioned[3] = {
+		GLKVector2MultiplyScalar(pointUVs[0], barycentricCoords.v[0]),
+		GLKVector2MultiplyScalar(pointUVs[1], barycentricCoords.v[1]),
+		GLKVector2MultiplyScalar(pointUVs[2], barycentricCoords.v[2])
+	};
+	
+	GLKVector2 texelUV = GLKVector2Add(GLKVector2Add(pointUVsPortioned[0], pointUVsPortioned[1]), pointUVsPortioned[2]);
+	return texelUV;
+}
+
+GLKVector2 surfaceSTToTexelUV_barycentricQuad(GLKVector2 surfaceST, GLKVector2 pointSTs[4], GLKVector2 pointUVs[4])
+{
+	static const int kStarboardTriInQuadIndices[3] = { 0, 1, 2 };
+	static const int kPortTriInQuadIndices[3] = { 0, 2, 3 };
+	
+	//// @source http://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
+	float lineVsPointCross = GLKVector2CrossProduct(
+		GLKVector2Subtract(pointSTs[2], pointSTs[0]),
+		GLKVector2Subtract(surfaceST, pointSTs[0])
+	);
+	//BOOL starboardSide = lineVsPointCross > 0.0f;
+	//
+	//const int *triInQuadIndices = starboardSide ? kStarboardTriInQuadIndices : kPortTriInQuadIndices;
+	//return surfaceSTToTexelUV_barycentricTri(
+	//	surfaceST,
+	//	(GLKVector2[3]){
+	//		pointSTs[triInQuadIndices[0]],
+	//		pointSTs[triInQuadIndices[1]],
+	//		pointSTs[triInQuadIndices[2]]
+	//	},
+	//	(GLKVector2[3]){
+	//		pointUVs[triInQuadIndices[0]],
+	//		pointUVs[triInQuadIndices[1]],
+	//		pointUVs[triInQuadIndices[2]]
+	//	}
+	//);
+	
+	GLKVector2 starboardUVs = surfaceSTToTexelUV_barycentricTri(
+		surfaceST,
+		(GLKVector2[3]){
+			pointSTs[kStarboardTriInQuadIndices[0]],
+			pointSTs[kStarboardTriInQuadIndices[1]],
+			pointSTs[kStarboardTriInQuadIndices[2]]
+		},
+		(GLKVector2[3]){
+			pointUVs[kStarboardTriInQuadIndices[0]],
+			pointUVs[kStarboardTriInQuadIndices[1]],
+			pointUVs[kStarboardTriInQuadIndices[2]]
+		}
+	);
+	GLKVector2 portUVs = surfaceSTToTexelUV_barycentricTri(
+		surfaceST,
+		(GLKVector2[3]){
+			pointSTs[kPortTriInQuadIndices[0]],
+			pointSTs[kPortTriInQuadIndices[1]],
+			pointSTs[kPortTriInQuadIndices[2]]
+		},
+		(GLKVector2[3]){
+			pointUVs[kPortTriInQuadIndices[0]],
+			pointUVs[kPortTriInQuadIndices[1]],
+			pointUVs[kPortTriInQuadIndices[2]]
+		}
+	);
+	//return GLKVector2Make(lineVsPointCross, lineVsPointCross);
+	return GLKVector2Lerp(portUVs, starboardUVs, (lineVsPointCross + 1.0f) * 0.5f);
 }
 
 static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
@@ -174,7 +307,7 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	
 	const CGPoint points[4] = { self.point1, self.point2, self.point3, self.point4 };
 	
-	const GLKVector2 texelUV = surfaceSTToTexelUV(
+	const GLKVector2 texelUV = surfaceSTToTexelUV_barycentricQuad(
 		GLKVector2Make((CGFloat)pixelX / width, (CGFloat)pixelY / height),
 		(GLKVector2[4]){
 			GLKVector2FromCGPoint(points[0]),
@@ -222,13 +355,17 @@ size_t genDestImagePixelBytesAtPosition(void *info, void *buffer, off_t position
 	switch (pixelByteOffset)
 	{
 		case 0:
-			byteBuffer[0] = nearestTexelSample[0];
+			//byteBuffer[0] = nearestTexelSample[0];
+			byteBuffer[0] = fabsf(texelUV.x) * 255.0f;
 		case 1:
-			byteBuffer[1] = nearestTexelSample[1];
+			//byteBuffer[1] = nearestTexelSample[1];
+			byteBuffer[1] = fabsf(texelUV.y) * 255.0f;
 		case 2:
-			byteBuffer[2] = nearestTexelSample[2];
+			//byteBuffer[2] = nearestTexelSample[2];
+			byteBuffer[2] = (texelUV.x < 0 ? 127 : 0) + (texelUV.y < 0 ? 127 : 0);
 		case 3:
-			byteBuffer[3] = nearestTexelSample[3];
+			//byteBuffer[3] = nearestTexelSample[3];
+			byteBuffer[3] = 255;
 			break;
 		
 		default:
@@ -266,7 +403,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 {
 	if (!_destImage) {
 		CGSize destBoundsSize = self.imageView.bounds.size;
-		CGFloat destScale = 0.5f;//UIScreen.mainScreen.scale;
+		CGFloat destScale = 2.0f;//0.5f;//UIScreen.mainScreen.scale;
 		unsigned int width = _destImageWidth = destBoundsSize.width * destScale,
 			height = _destImageHeight = destBoundsSize.height * destScale;
 		
@@ -367,10 +504,10 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	
 	[self switchToImageNamed:srcImageName];
 	
-	self.point1 = CGPointMake(0.0, 0.0);
-	self.point2 = CGPointMake(0.1, 0.9);
-	self.point3 = CGPointMake(1.0, 1.0);
-	self.point4 = CGPointMake(0.9, 0.1);
+	self.point1 = CGPointMake(0.0f, 0.0f);
+	self.point2 = CGPointMake(0.0f, 1.0f);
+	self.point3 = CGPointMake(1.0f, 1.0f);
+	self.point4 = CGPointMake(1.0f, 0.0f);
 	
 	[self.handle1 enableDragging];
 	[self.handle2 enableDragging];
