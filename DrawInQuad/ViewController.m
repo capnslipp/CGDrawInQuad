@@ -630,7 +630,7 @@ size_t genDestImageBytesAtPosition(void *info, void *buffer, off_t position, siz
 	[self updateWrapClampUVsToggleButton];
 	[NSUserDefaults.standardUserDefaults setBool:_wrapUVs forKey:kLastWrapUVsNameKey];
 	
-	[self redrawDestImage];
+	// called as a side-effect of repositioning the wrapClampUVsToggleButton: [self redrawDestImage];
 }
 
 - (void)updateWrapClampUVsToggleButton
