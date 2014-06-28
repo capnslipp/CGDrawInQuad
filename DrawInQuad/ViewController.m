@@ -328,6 +328,8 @@ static const int kComponentCount = 4;
 		self.point3 = [self pointFromHandleCenter:self.handle3.center];
 	else if (sender == self.handle4)
 		self.point4 = [self pointFromHandleCenter:self.handle4.center];
+	
+	[self redrawDestImage];
 }
 
 - (IBAction)selectImage:(id)sender
@@ -381,11 +383,6 @@ static const int kComponentCount = 4;
 	_destImage = nil;
 	
 	[NSUserDefaults.standardUserDefaults setObject:imageName forKey:kLastSrcImageNameKey];
-}
-
-- (IBAction)redrawNow:(id)sender
-{
-	[self redrawDestImage];
 }
 
 - (void)redrawDestImage

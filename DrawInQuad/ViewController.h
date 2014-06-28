@@ -27,6 +27,4 @@
 @property (weak, nonatomic) IBOutlet UIButton *wrapClampUVsToggleButton;
 - (IBAction)toggleWrapClamp:(id)sender;
 
-- (IBAction)redrawNow:(id)sender;
-
 @end
