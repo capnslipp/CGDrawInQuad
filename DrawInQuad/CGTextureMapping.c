@@ -9,6 +9,7 @@
 
 #pragma mark Constants
 
+/// This blit only works with 4 components per pixel (RGBA).
 static const int kComponentCount = 4;
 
 
@@ -16,12 +17,16 @@ static const int kComponentCount = 4;
 #pragma mark Intermediate Data
 
 struct DestImageGenInfo {
-	int srcWidth, srcHeight;
-	CFDataRef srcData;
+	int srcWidth_i, srcHeight_i;
+	float srcWidth_f, srcHeight_f;
+	const UInt8 * srcBytes;
 	
 	int destWidth, destHeight;
 	
-	GLKVector2 points[4];
+	union {
+		GLKVector2 points[4];
+		struct { GLKVector2 point1, point2, point3, point4; };
+	};
 	
 	bool wrapUVs;
 };
@@ -163,23 +168,11 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const GLKVector2 surfaceST, const 
 	);
 }
 
-size_t genDestImagePixelBytesAtPosition(struct DestImageGenInfo *info, void *buffer, off_t position, size_t requestedByteCount)
+void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixelX, const int pixelY, UInt8 *pixelByteBuffer)
 {
-	struct DestImageGenInfo genInfo = *info;
+	static const int kBytesPerPixel = kComponentCount;
 	
-	const int kBytesPerPixel = 4;
-	
-	UInt8 *byteBuffer = (UInt8 *)buffer;
-	
-	const unsigned int width = genInfo.destWidth,
-		height = genInfo.destHeight,
-		pixelCount = width * height;
-	
-	const unsigned int pixelIndex = (unsigned int)(position / kBytesPerPixel);
-	if (pixelIndex >= pixelCount)
-		return 0;
-	const unsigned int pixelX = pixelIndex % width,
-		pixelY = pixelIndex / width;
+	const struct DestImageGenInfo genInfo = *info;
 	
 	static const GLKVector2 kPointUVs[4] = {
 		(GLKVector2){ .x = 0.0f, .y = 0.0f },
@@ -187,92 +180,76 @@ size_t genDestImagePixelBytesAtPosition(struct DestImageGenInfo *info, void *buf
 		(GLKVector2){ .x = 1.0f, .y = 1.0f },
 		(GLKVector2){ .x = 1.0f, .y = 0.0f },
 	};
-	const GLKVector2 texelUV = surfaceSTToTexelUV_barycentricQuad(
-		GLKVector2Make((CGFloat)pixelX / width, (CGFloat)pixelY / height),
+	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
+		GLKVector2Make((CGFloat)pixelX / genInfo.destWidth, (CGFloat)pixelY / genInfo.destHeight),
 		genInfo.points,
 		kPointUVs
 	);
 	
-	int nearestTexelXY[2] = {
-		roundf(texelUV.s * genInfo.srcWidth - 0.5f),
-		roundf(texelUV.t * genInfo.srcHeight - 0.5f)
-	};
+	int nearestTexelX = roundf(texelUV.s * genInfo.srcWidth_f - 0.5f);
+	int nearestTexelY = roundf(texelUV.t * genInfo.srcHeight_f - 0.5f);
+	
 	if (genInfo.wrapUVs) {
-		if (!withini(nearestTexelXY[0], 0, genInfo.srcWidth - 1))
-			nearestTexelXY[0] = modulo(nearestTexelXY[0], genInfo.srcWidth);
-		if (!withini(nearestTexelXY[1], 0, genInfo.srcHeight - 1))
-			nearestTexelXY[1] = modulo(nearestTexelXY[1], genInfo.srcHeight);
+		if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
+			nearestTexelX = modulo(nearestTexelX, genInfo.srcWidth_i);
+		if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
+			nearestTexelY = modulo(nearestTexelY, genInfo.srcHeight_i);
 	}
 	else {
-		if (!withini(nearestTexelXY[0], 0, genInfo.srcWidth - 1))
-			nearestTexelXY[0] = clampi(nearestTexelXY[0], 0, genInfo.srcWidth - 1);
-		if (!withini(nearestTexelXY[1], 0, genInfo.srcHeight - 1))
-			nearestTexelXY[1] = clampi(nearestTexelXY[1], 0, genInfo.srcHeight - 1);
+		if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
+			nearestTexelX = clampi(nearestTexelX, 0, genInfo.srcWidth_i - 1);
+		if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
+			nearestTexelY = clampi(nearestTexelY, 0, genInfo.srcHeight_i - 1);
 	}
 	
-	const int texelIndex = nearestTexelXY[1] * genInfo.srcWidth + nearestTexelXY[0];
+	const int texelIndex = nearestTexelY * genInfo.srcWidth_i + nearestTexelX;
+	const UInt8 *texelBytes = &genInfo.srcBytes[texelIndex * kBytesPerPixel];
 	
-	UInt8 nearestTexelSample[4];
-	CFDataGetBytes(
-		genInfo.srcData,
-		CFRangeMake(texelIndex * kBytesPerPixel, kBytesPerPixel),
-		nearestTexelSample
-	);
+	//UInt8 nearestTexelSample[kBytesPerPixel];
+	pixelByteBuffer[0] = texelBytes[0];
+	pixelByteBuffer[1] = texelBytes[1];
+	pixelByteBuffer[2] = texelBytes[2];
+	pixelByteBuffer[3] = texelBytes[3];
 	
-	const unsigned int pixelByteOffset = position % kBytesPerPixel;
-	const size_t byteCount = kBytesPerPixel - pixelByteOffset;
-	
-	assert(kComponentCount == 4); // This blit only works with 4 components per pixel (RGBA).
-	
-	switch (pixelByteOffset)
-	{
-		case 0:
-			byteBuffer[0] = nearestTexelSample[0];
-			//byteBuffer[0] = fabsf(texelUV.x) * 255.0f; // @debug: show UVs directly
-		case 1:
-			byteBuffer[1] = nearestTexelSample[1];
-			//byteBuffer[1] = fabsf(texelUV.y) * 255.0f; // @debug: show UVs directly
-		case 2:
-			byteBuffer[2] = nearestTexelSample[2];
-			//byteBuffer[2] = (texelUV.x < 0 ? 127 : 0) + (texelUV.y < 0 ? 127 : 0); // @debug: show UVs directly
-		case 3:
-			byteBuffer[3] = nearestTexelSample[3];
-			//byteBuffer[3] = 255; // @debug: show UVs directly
-			break;
-		
-		default:
-			assert(pixelByteOffset < 4);
-	}
-	
-	return byteCount;
+	//memcpy(pixelByteBuffer, nearestTexelSample, kBytesPerPixel);
+	// @debug: show UVs directly
+	//pixelByteBuffer[0] = fabsf(texelUV.x) * 255.0f;
+	//pixelByteBuffer[1] = fabsf(texelUV.y) * 255.0f;
+	//pixelByteBuffer[2] = (texelUV.x < 0 ? 127 : 0) + (texelUV.y < 0 ? 127 : 0);
+	//pixelByteBuffer[3] = 255;
 }
 
 /// Returned image data buffer must be freed with free() by the caller.
 UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], bool wrapUVs, size_t *out_byteCount)
 {
-	unsigned int pixelCount = destWidth * destHeight;
-	size_t byteCount = pixelCount * 4;
-	
-	UInt8 *byteBuffer = malloc(byteCount);
-	
-	struct DestImageGenInfo info = {
-		.srcWidth = srcWidth, .srcHeight = srcHeight,
-		.srcData = srcData,
+	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
+	const struct DestImageGenInfo info = {
+		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
+		.srcWidth_f = srcWidth, .srcHeight_f = srcHeight,
+		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
+		.point1 = GLKVector2FromCGPoint(points[0]),
+		.point2 = GLKVector2FromCGPoint(points[1]),
+		.point3 = GLKVector2FromCGPoint(points[2]),
+		.point4 = GLKVector2FromCGPoint(points[3]),
 		.wrapUVs = wrapUVs,
 	};
-	info.points[0] = GLKVector2FromCGPoint(points[0]);
-	info.points[1] = GLKVector2FromCGPoint(points[1]);
-	info.points[2] = GLKVector2FromCGPoint(points[2]);
-	info.points[3] = GLKVector2FromCGPoint(points[3]);
 	
-	size_t bytesPerPixel = kComponentCount;
+	unsigned int pixelCount = destWidth * destHeight;
+	size_t byteCount = pixelCount * 4;
+	UInt8 *byteBuffer = malloc(byteCount);
 	
-	for (int pixelI = pixelCount - 1; pixelI >= 0; --pixelI) {
-		off_t position = pixelI * bytesPerPixel;
-		
-		size_t bytesGenerated = genDestImagePixelBytesAtPosition(&info, &byteBuffer[position], position, bytesPerPixel);
-		assert(bytesGenerated == bytesPerPixel); // Fewer bytes generated than requested.
+	const size_t kBytesPerPixel = kComponentCount;
+	
+	for (int pixelX = destWidth - 1; pixelX >= 0; --pixelX) {
+		for (int pixelY = destHeight - 1; pixelY >= 0; --pixelY) {
+			int pixelI = pixelY * destWidth + pixelX;
+			
+			off_t position = pixelI * kBytesPerPixel;
+			UInt8 *pixelBytes = &byteBuffer[position];
+			
+			genDestImagePixelBytes(&info, pixelX, pixelY, pixelBytes);
+		}
 	}
 	
 	if (out_byteCount != NULL)
