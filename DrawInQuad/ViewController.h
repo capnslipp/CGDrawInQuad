@@ -25,6 +25,6 @@
 - (IBAction)selectImage:(id)sender;
 
 @property (weak, nonatomic) IBOutlet UIButton *wrapClampUVsButton;
-- (IBAction)selectOutsideOfQuadMode:(id)sender;
+- (IBAction)selectOutsideOfQuadUVMode:(id)sender;
 
 @end

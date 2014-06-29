@@ -110,7 +110,7 @@
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
-                                    <action selector="selectOutsideOfQuadMode:" destination="BYZ-38-t0r" eventType="touchUpInside" id="cRb-lm-ZoE"/>
+                                    <action selector="selectOutsideOfQuadUVMode:" destination="BYZ-38-t0r" eventType="touchUpInside" id="LFw-nD-E3g"/>
                                 </connections>
                             </button>
                         </subviews>
