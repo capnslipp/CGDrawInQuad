@@ -251,11 +251,9 @@ UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int 
 		.uvMode = uvMode,
 	};
 	
+	static const size_t kBytesPerPixel = kComponentCount;
 	unsigned int pixelCount = destWidth * destHeight;
-	size_t byteCount = pixelCount * 4;
-	UInt8 *byteBuffer = malloc(byteCount);
-	
-	const size_t kBytesPerPixel = kComponentCount;
+	UInt8 *byteBuffer = calloc(pixelCount, kBytesPerPixel); // #000000,00-initializes
 	
 	for (int pixelX = destWidth - 1; pixelX >= 0; --pixelX) {
 		for (int pixelY = destHeight - 1; pixelY >= 0; --pixelY) {
@@ -269,7 +267,7 @@ UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int 
 	}
 	
 	if (out_byteCount != NULL)
-		*out_byteCount = byteCount;
+		*out_byteCount = pixelCount * kBytesPerPixel;
 	
 	return byteBuffer;
 }

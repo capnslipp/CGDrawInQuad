@@ -24,7 +24,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *imageSelectionButton;
 - (IBAction)selectImage:(id)sender;
 
-@property (weak, nonatomic) IBOutlet UIButton *wrapClampUVsToggleButton;
-- (IBAction)toggleWrapClamp:(id)sender;
+@property (weak, nonatomic) IBOutlet UIButton *wrapClampUVsButton;
+- (IBAction)selectOutsideOfQuadMode:(id)sender;
 
 @end

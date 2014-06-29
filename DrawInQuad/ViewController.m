@@ -39,9 +39,12 @@ static inline uint32_t nSecsSubSecRemainder(uint64_t nSecs) {
 #pragma mark Constants
 
 static NSString *const kLastSrcImageNameKey = @"ViewController_LastSrcImageName";
-static NSString *const kLastWrapUVsNameKey = @"ViewController_WrapUVsName";
+static NSString *const kLastWrapOutsideOfQuadUVModeKey = @"ViewController_OutsideOfQuadUVMode";
 
 static const int kComponentCount = 4;
+
+static const OutsideOfQuadUVMode kDefaultOutsideOfQuadUVMode = OutsideOfQuadUVWrap;
+static NSArray *kOutsideOfQuadUVModeNames;
 
 
 
@@ -50,7 +53,7 @@ static const int kComponentCount = 4;
 @interface ViewController () {
 	NSArray *_srcPossibilityNames;
 	
-	QBPopupMenu *_popupMenu;
+	QBPopupMenu *_imageSelectionPopupMenu;
 	
 	UIImage *_srcImage;
 	CFDataRef _srcData;
@@ -60,7 +63,8 @@ static const int kComponentCount = 4;
 	size_t _destByteCount;
 	int _destWidth, _destHeight;
 	
-	BOOL _wrapUVs;
+	OutsideOfQuadUVMode _outsideOfQuadUVMode;
+	QBPopupMenu *_outsideOfQuadUVModePopupMenu;
 }
 
 - (CGPoint)handleCenterFromPoint:(CGPoint)point;
@@ -72,6 +76,12 @@ static const int kComponentCount = 4;
 
 
 @implementation ViewController
+
++ (void)initialize
+{
+	kOutsideOfQuadUVModeNames = @[@"Wrapping UVs", @"Clamping UVs", @"Skipping Outside UVs"];
+}
+
 
 @synthesize imageView=_imageView;
 
@@ -129,7 +139,7 @@ static const int kComponentCount = 4;
 			_srcWidth, _srcHeight, _srcData,
 			_destWidth, _destHeight,
 			(CGPoint[4]){ self.point1, self.point2, self.point3, self.point4 },
-			_wrapUVs ? OutsideOfQuadUVClamp : OutsideOfQuadUVWrap,
+			_outsideOfQuadUVMode,
 			&createdByteCount
 		);
 		NSAssert(createdByteCount == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
@@ -188,38 +198,65 @@ static const int kComponentCount = 4;
 	_srcPossibilityNames = srcPossibilityNames;
 }
 
+- (QBPopupMenu *)createImageSelectionPopupMenu
+{
+	NSArray *popupMenuItems = [_srcPossibilityNames bk_map:^(NSString *name) {
+		return [QBPopupMenuItem itemWithTitle:name target:self action:@selector(switchToImageMenuItem:)];
+	}];
+    QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
+	popupMenu.color = [UIColor.whiteColor colorWithAlphaComponent:0.9];
+	popupMenu.highlightedColor = self.view.tintColor;
+	popupMenu.textColor = UIColor.blackColor;
+	popupMenu.arrowDirection = QBPopupMenuArrowDirectionDown;
+	popupMenu.delegate = self;
+	
+	return popupMenu;
+}
+
+- (QBPopupMenu *)createOutsideOfQuadUVModePopupMenu
+{
+	NSArray *popupMenuItems = [kOutsideOfQuadUVModeNames bk_map:^(NSString *name) {
+		return [QBPopupMenuItem itemWithTitle:name target:self action:@selector(switchToOutsideOfQuadUVModeMenuItem:)];
+	}];
+    QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
+	popupMenu.color = [UIColor.whiteColor colorWithAlphaComponent:0.9];
+	popupMenu.highlightedColor = self.view.tintColor;
+	popupMenu.textColor = UIColor.blackColor;
+	popupMenu.arrowDirection = QBPopupMenuArrowDirectionDown;
+	popupMenu.delegate = self;
+	
+	return popupMenu;
+}
+
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 	
 	[self generateSrcPossibilities];
 	
-	NSArray *popupMenuItems = [_srcPossibilityNames bk_map:^(NSString *name) {
-		return [QBPopupMenuItem itemWithTitle:name target:self action:@selector(switchToImage:)];
-	}];
-    QBPopupMenu *popupMenu = [[QBPopupMenu alloc] initWithItems:popupMenuItems];
-	popupMenu.color = [UIColor.whiteColor colorWithAlphaComponent:0.9];
-	popupMenu.highlightedColor = self.view.tintColor;
-	popupMenu.textColor = UIColor.blackColor;
-	popupMenu.arrowDirection = QBPopupMenuArrowDirectionLeft;
-	popupMenu.delegate = self;
-    _popupMenu = popupMenu;
+    _imageSelectionPopupMenu = [self createImageSelectionPopupMenu];
 	
 	[_imageSelectionButton setTitle:nil forState:UIControlStateHighlighted];
 	[_imageSelectionButton setTitle:nil forState:UIControlStateDisabled];
 	[_imageSelectionButton setTitle:nil forState:UIControlStateSelected];
-	
-	NSNumber *wrapUVsValue = [NSUserDefaults.standardUserDefaults objectForKey:kLastWrapUVsNameKey];
-	if (wrapUVsValue == nil)
-		_wrapUVs = YES;
-	else
-		_wrapUVs = wrapUVsValue.boolValue;
 	
 	NSString *srcImageName = [NSUserDefaults.standardUserDefaults stringForKey:kLastSrcImageNameKey];
 	if (srcImageName == nil || ![_srcPossibilityNames containsObject:srcImageName])
 		srcImageName = _srcPossibilityNames.firstObject;
 	
 	[self switchToImageNamed:srcImageName];
+	
+	NSNumber *outsideOfQuadUVModeValue = [NSUserDefaults.standardUserDefaults objectForKey:kLastWrapOutsideOfQuadUVModeKey];
+	if (outsideOfQuadUVModeValue == nil)
+		_outsideOfQuadUVMode = kDefaultOutsideOfQuadUVMode;
+	else
+		_outsideOfQuadUVMode = outsideOfQuadUVModeValue.intValue;
+	
+	[_wrapClampUVsButton setTitle:nil forState:UIControlStateHighlighted];
+	[_wrapClampUVsButton setTitle:nil forState:UIControlStateDisabled];
+	[_wrapClampUVsButton setTitle:nil forState:UIControlStateSelected];
+	
+	[self switchToOutsideOfQuadUVMode:_outsideOfQuadUVMode];
 	
 	self.point1 = CGPointMake(0.00f, 0.00f);
 	self.point2 = CGPointMake(0.05f, 0.95f);
@@ -231,10 +268,11 @@ static const int kComponentCount = 4;
 	[self.handle3 enableDragging];
 	[self.handle4 enableDragging];
 	
-	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateHighlighted];
-	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateDisabled];
-	[_wrapClampUVsToggleButton setTitle:nil forState:UIControlStateSelected];
-	[self updateWrapClampUVsToggleButton];
+    _outsideOfQuadUVModePopupMenu = [self createOutsideOfQuadUVModePopupMenu];
+	
+	CALayer *imageViewLayer = self.imageView.layer;
+	imageViewLayer.borderWidth = 0.5f;
+	imageViewLayer.borderColor = [UIColor colorWithWhite:0.0f alpha:(0x27 / 255.0f)].CGColor;
 }
 
 - (void)dealloc
@@ -332,6 +370,14 @@ static const int kComponentCount = 4;
 	[self redrawDestImage];
 }
 
+- (void)popupMenuWillDisappear:(QBPopupMenu *)popupMenu
+{
+	if (popupMenu == _imageSelectionPopupMenu)
+		[self selectImagePopupMenuWillDisappear:popupMenu];
+	else if (popupMenu == _outsideOfQuadUVModePopupMenu)
+		[self selectOutsideOfQuadUVModePopupMenuWillDisappear:popupMenu];
+}
+
 - (IBAction)selectImage:(id)sender
 {
 	UIButton *imageSelectionButton = self.imageSelectionButton;
@@ -345,14 +391,11 @@ static const int kComponentCount = 4;
 	];
 	
 	UIView *viewSender = (UIView *)sender;
-	[_popupMenu showInView:self.view targetRect:viewSender.frame animated:YES];
+	[_imageSelectionPopupMenu showInView:self.view targetRect:viewSender.frame animated:YES];
 }
 
-- (void)popupMenuWillDisappear:(QBPopupMenu *)popupMenu
+- (void)selectImagePopupMenuWillDisappear:(QBPopupMenu *)popupMenu
 {
-	if (popupMenu != _popupMenu)
-		return;
-	
 	UIButton *imageSelectionButton = self.imageSelectionButton;
 	[UIView animateWithDuration:0.5
 		animations:^{
@@ -361,7 +404,7 @@ static const int kComponentCount = 4;
 	];
 }
 
-- (void)switchToImage:(QBPopupMenuItem *)sender
+- (void)switchToImageMenuItem:(QBPopupMenuItem *)sender
 {
 	NSString *imageName = sender.title;
 	[self switchToImageNamed:imageName];
@@ -385,33 +428,62 @@ static const int kComponentCount = 4;
 	[NSUserDefaults.standardUserDefaults setObject:imageName forKey:kLastSrcImageNameKey];
 }
 
+- (IBAction)selectOutsideOfQuadUVMode:(id)sender
+{
+	UIButton *wrapClampUVsButton = self.wrapClampUVsButton;
+	[UIView animateWithDuration:0.5
+		animations:^{
+			wrapClampUVsButton.selected = YES;
+		}
+		completion:^(BOOL finished) {
+			wrapClampUVsButton.selected = YES;
+		}
+	];
+	
+	UIView *viewSender = (UIView *)sender;
+	[_outsideOfQuadUVModePopupMenu showInView:self.view targetRect:viewSender.frame animated:YES];
+}
+
+- (void)selectOutsideOfQuadUVModePopupMenuWillDisappear:(QBPopupMenu *)popupMenu
+{
+	UIButton *wrapClampUVsButton = self.wrapClampUVsButton;
+	[UIView animateWithDuration:0.5
+		animations:^{
+			wrapClampUVsButton.selected = NO;
+		}
+	];
+}
+
+- (void)switchToOutsideOfQuadUVModeMenuItem:(QBPopupMenuItem *)sender
+{
+	NSString *modeName = sender.title;
+	int modeIndex = (int)[kOutsideOfQuadUVModeNames indexOfObject:modeName];
+	
+	[self switchToOutsideOfQuadUVMode:modeIndex];
+}
+- (void)switchToOutsideOfQuadUVMode:(OutsideOfQuadUVMode)mode
+{
+	UIButton *wrapClampUVsButton = self.wrapClampUVsButton;
+	
+	NSString *title = kOutsideOfQuadUVModeNames[mode];
+	[wrapClampUVsButton setTitle:title forState:UIControlStateNormal];
+	
+	[wrapClampUVsButton sizeToFit];
+	
+	CGPoint center = wrapClampUVsButton.center;
+	center.x = self.view.bounds.size.width * 0.5f;
+	wrapClampUVsButton.center = center;
+	
+	_outsideOfQuadUVMode = mode;
+	
+	[NSUserDefaults.standardUserDefaults setInteger:mode forKey:kLastWrapOutsideOfQuadUVModeKey];
+}
+
 - (void)redrawDestImage
 {
 	_destImage = nil;
 	_imageView.image = self.destImage;
-}
-
-- (IBAction)toggleWrapClamp:(id)sender
-{
-	_wrapUVs = !_wrapUVs;
-	[self updateWrapClampUVsToggleButton];
-	[NSUserDefaults.standardUserDefaults setBool:_wrapUVs forKey:kLastWrapUVsNameKey];
-	
-	// called as a side-effect of repositioning the wrapClampUVsToggleButton: [self redrawDestImage];
-}
-
-- (void)updateWrapClampUVsToggleButton
-{
-	UIButton *wrapClampUVsToggleButton = self.wrapClampUVsToggleButton;
-	
-	NSString *title = _wrapUVs ? @"Wrapping UVs" : @"Clamping UVs";
-	[wrapClampUVsToggleButton setTitle:title forState:UIControlStateNormal];
-	
-	[wrapClampUVsToggleButton sizeToFit];
-	
-	CGPoint center = wrapClampUVsToggleButton.center;
-	center.x = self.view.bounds.size.width * 0.5f;
-	wrapClampUVsToggleButton.center = center;
+	// called as a side-effect of repositioning the wrapClampUVsButton: [self redrawDestImage];
 }
 
 @end
