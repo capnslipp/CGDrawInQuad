@@ -28,7 +28,7 @@ struct DestImageGenInfo {
 		struct { GLKVector2 point1, point2, point3, point4; };
 	};
 	
-	bool wrapUVs;
+	OutsideOfQuadUVMode uvMode;
 };
 
 
@@ -59,7 +59,7 @@ static inline int clampi(int v, int l, int h)
 
 static inline bool withini(int v, int l, int h)
 {
-	return v > l && v < h;
+	return v >= l && v <= h;
 }
 
 static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 *out_nearestPoint)
@@ -189,17 +189,33 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 	int nearestTexelX = roundf(texelUV.s * genInfo.srcWidth_f - 0.5f);
 	int nearestTexelY = roundf(texelUV.t * genInfo.srcHeight_f - 0.5f);
 	
-	if (genInfo.wrapUVs) {
-		if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
-			nearestTexelX = modulo(nearestTexelX, genInfo.srcWidth_i);
-		if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
-			nearestTexelY = modulo(nearestTexelY, genInfo.srcHeight_i);
+	if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
+	{
+		switch (genInfo.uvMode)
+		{
+			case OutsideOfQuadUVWrap:
+				nearestTexelX = modulo(nearestTexelX, genInfo.srcWidth_i);
+				break;
+			case OutsideOfQuadUVClamp:
+				nearestTexelX = clampi(nearestTexelX, 0, genInfo.srcWidth_i - 1);
+				break;
+			case OutsideOfQuadUVSkip:
+				return; // early out
+		}
 	}
-	else {
-		if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
-			nearestTexelX = clampi(nearestTexelX, 0, genInfo.srcWidth_i - 1);
-		if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
-			nearestTexelY = clampi(nearestTexelY, 0, genInfo.srcHeight_i - 1);
+	if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
+	{
+		switch (genInfo.uvMode)
+		{
+			case OutsideOfQuadUVWrap:
+				nearestTexelY = modulo(nearestTexelY, genInfo.srcHeight_i);
+				break;
+			case OutsideOfQuadUVClamp:
+				nearestTexelY = clampi(nearestTexelY, 0, genInfo.srcHeight_i - 1);
+				break;
+			case OutsideOfQuadUVSkip:
+				return; // early out
+		}
 	}
 	
 	const int texelIndex = nearestTexelY * genInfo.srcWidth_i + nearestTexelX;
@@ -220,7 +236,7 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 }
 
 /// Returned image data buffer must be freed with free() by the caller.
-UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], bool wrapUVs, size_t *out_byteCount)
+UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], OutsideOfQuadUVMode uvMode, size_t *out_byteCount)
 {
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
 	const struct DestImageGenInfo info = {
@@ -232,7 +248,7 @@ UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int 
 		.point2 = GLKVector2FromCGPoint(points[1]),
 		.point3 = GLKVector2FromCGPoint(points[2]),
 		.point4 = GLKVector2FromCGPoint(points[3]),
-		.wrapUVs = wrapUVs,
+		.uvMode = uvMode,
 	};
 	
 	unsigned int pixelCount = destWidth * destHeight;

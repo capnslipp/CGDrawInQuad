@@ -129,7 +129,7 @@ static const int kComponentCount = 4;
 			_srcWidth, _srcHeight, _srcData,
 			_destWidth, _destHeight,
 			(CGPoint[4]){ self.point1, self.point2, self.point3, self.point4 },
-			_wrapUVs,
+			_wrapUVs ? OutsideOfQuadUVClamp : OutsideOfQuadUVWrap,
 			&createdByteCount
 		);
 		NSAssert(createdByteCount == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
