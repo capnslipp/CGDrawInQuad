@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CoreFoundation/CFData.h>
-#include <CoreGraphics/CGGeometry.h>
+#include <GLKit/GLKVector2.h>
 
 
 
@@ -13,4 +13,4 @@ typedef enum OutsideOfQuadUVMode
 } OutsideOfQuadUVMode;
 
 
-UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], OutsideOfQuadUVMode uvMode, size_t *out_byteCount);
+CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], OutsideOfQuadUVMode uvMode);

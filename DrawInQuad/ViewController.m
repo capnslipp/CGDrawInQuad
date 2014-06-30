@@ -111,6 +111,10 @@ static NSArray *kOutsideOfQuadUVModeNames;
 	[_outlineView setPoint:point atIndexedSubscript:3];
 }
 
+static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
+	return GLKVector2Make(point.x, point.y);
+}
+
 - (UIImage *)destImage
 {
 	if (!_destImage) {
@@ -135,19 +139,22 @@ static NSArray *kOutsideOfQuadUVModeNames;
 		uint64_t startTime_nSec = getAccurateSystemTime_nSec();
 		
 		size_t createdByteCount = 0;
-		UInt8 *imageData = createDestImageData(
+		CFDataRef imageData = createDestImageData(
 			_srcWidth, _srcHeight, _srcData,
 			_destWidth, _destHeight,
-			(CGPoint[4]){ self.point1, self.point2, self.point3, self.point4 },
-			_outsideOfQuadUVMode,
-			&createdByteCount
+			(GLKVector2[4]){
+				GLKVector2FromCGPoint(self.point1),
+				GLKVector2FromCGPoint(self.point2),
+				GLKVector2FromCGPoint(self.point3),
+				GLKVector2FromCGPoint(self.point4),
+			},
+			_outsideOfQuadUVMode
 		);
-		NSAssert(createdByteCount == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
+		NSAssert(CFDataGetLength(imageData) == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
 		
 		// The advange of using a CFData with CGDataProviderCreateWithCFData() over CGDataProviderCreateWithData() is that the data is ref-counted, and in this function we can release-it-and-forget-it.
 		// Specifically: `imageData` is now owned by `data`, which after this function's scope is owned by `dataProvider` which is owned by `destCGImage`, which is owned by `_destImage`.
-		CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, imageData, createdByteCount, kCFAllocatorMalloc);
-		CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData(data);
+		CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData(imageData);
 		
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		CGImageRef destCGImage = CGImageCreate(
@@ -165,7 +172,7 @@ static NSArray *kOutsideOfQuadUVModeNames;
 		CGColorSpaceRelease(colorSpace);
 		
 		CGDataProviderRelease(dataProvider);
-		CFRelease(data);
+		CFRelease(imageData);
 		
 		uint64_t endTime_nSec = getAccurateSystemTime_nSec();
 		

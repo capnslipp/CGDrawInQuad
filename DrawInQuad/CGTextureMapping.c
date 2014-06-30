@@ -101,10 +101,6 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 	return GLKVector3Make(1.0f - v - w, v, w);
 }
 
-static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
-	return GLKVector2Make(point.x, point.y);
-}
-
 
 #pragma mark Texture Mapping Functions
 
@@ -181,13 +177,13 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 		(GLKVector2){ .x = 1.0f, .y = 0.0f },
 	};
 	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
-		GLKVector2Make((CGFloat)pixelX / genInfo.destWidth, (CGFloat)pixelY / genInfo.destHeight),
+		GLKVector2Make((float)pixelX / genInfo.destWidth, (float)pixelY / genInfo.destHeight),
 		genInfo.points,
 		kPointUVs
 	);
 	
-	int nearestTexelX = roundf(texelUV.s * genInfo.srcWidth_f - 0.5f);
-	int nearestTexelY = roundf(texelUV.t * genInfo.srcHeight_f - 0.5f);
+	int nearestTexelX = (int)lroundf(texelUV.s * genInfo.srcWidth_f - 0.5f);
+	int nearestTexelY = (int)lroundf(texelUV.t * genInfo.srcHeight_f - 0.5f);
 	
 	if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
 	{
@@ -236,7 +232,7 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 }
 
 /// Returned image data buffer must be freed with free() by the caller.
-UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, CGPoint points[4], OutsideOfQuadUVMode uvMode, size_t *out_byteCount)
+CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], OutsideOfQuadUVMode uvMode)
 {
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
 	const struct DestImageGenInfo info = {
@@ -244,10 +240,10 @@ UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int 
 		.srcWidth_f = srcWidth, .srcHeight_f = srcHeight,
 		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
-		.point1 = GLKVector2FromCGPoint(points[0]),
-		.point2 = GLKVector2FromCGPoint(points[1]),
-		.point3 = GLKVector2FromCGPoint(points[2]),
-		.point4 = GLKVector2FromCGPoint(points[3]),
+		.point1 = points[0],
+		.point2 = points[1],
+		.point3 = points[2],
+		.point4 = points[3],
 		.uvMode = uvMode,
 	};
 	
@@ -266,8 +262,6 @@ UInt8 * createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int 
 		}
 	}
 	
-	if (out_byteCount != NULL)
-		*out_byteCount = pixelCount * kBytesPerPixel;
-	
-	return byteBuffer;
+	CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, byteBuffer, pixelCount * kBytesPerPixel, kCFAllocatorMalloc);
+	return data;
 }
