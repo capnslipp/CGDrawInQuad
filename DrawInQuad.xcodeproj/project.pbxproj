@@ -18,7 +18,7 @@
 		CA50EFE919515BE80002B467 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CA50EFE819515BE80002B467 /* ViewController.m */; };
 		CA50EFEB19515BE80002B467 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA50EFEA19515BE80002B467 /* Images.xcassets */; };
 		CAC663371952509A00930261 /* OutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = CAC663361952509A00930261 /* OutlineView.m */; };
-		D4341D56195F5E2D0069C78D /* CGTextureMapping.c in Sources */ = {isa = PBXBuildFile; fileRef = D4341D55195F5E2D0069C78D /* CGTextureMapping.c */; };
+		D4341D56195F5E2D0069C78D /* CGTextureMapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */; };
 		D477AA6219563FF0008F8965 /* src.eyes.s512.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5B19563FF0008F8965 /* src.eyes.s512.png */; };
 		D477AA6319563FF0008F8965 /* src.fc3.s128.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5C19563FF0008F8965 /* src.fc3.s128.png */; };
 		D477AA6419563FF0008F8965 /* src.red.s128.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5D19563FF0008F8965 /* src.red.s128.png */; };
@@ -49,7 +49,7 @@
 		CA50EFF119515BE90002B467 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		CAC663351952509A00930261 /* OutlineView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutlineView.h; sourceTree = "<group>"; };
 		CAC663361952509A00930261 /* OutlineView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OutlineView.m; sourceTree = "<group>"; };
-		D4341D55195F5E2D0069C78D /* CGTextureMapping.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CGTextureMapping.c; sourceTree = "<group>"; };
+		D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CGTextureMapping.cpp; sourceTree = "<group>"; };
 		D4341D57195F5EC10069C78D /* CGTextureMapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGTextureMapping.h; sourceTree = "<group>"; };
 		D4341D58195F60110069C78D /* GLKMathExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLKMathExtensions.h; sourceTree = "<group>"; };
 		D4341D59195F601B0069C78D /* GLKMathExtensions.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GLKMathExtensions.inl; sourceTree = "<group>"; };
@@ -121,7 +121,7 @@
 				CA50EFE719515BE80002B467 /* ViewController.h */,
 				CA50EFE819515BE80002B467 /* ViewController.m */,
 				D4341D57195F5EC10069C78D /* CGTextureMapping.h */,
-				D4341D55195F5E2D0069C78D /* CGTextureMapping.c */,
+				D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */,
 				D4341D58195F60110069C78D /* GLKMathExtensions.h */,
 				D4341D59195F601B0069C78D /* GLKMathExtensions.inl */,
 				CA50EFEA19515BE80002B467 /* Images.xcassets */,
@@ -263,7 +263,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA50EFE919515BE80002B467 /* ViewController.m in Sources */,
-				D4341D56195F5E2D0069C78D /* CGTextureMapping.c in Sources */,
+				D4341D56195F5E2D0069C78D /* CGTextureMapping.cpp in Sources */,
 				CA50EFE019515BE80002B467 /* AppDelegate.m in Sources */,
 				CA50EFDC19515BE80002B467 /* main.m in Sources */,
 				CAC663371952509A00930261 /* OutlineView.m in Sources */,

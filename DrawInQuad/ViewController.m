@@ -148,7 +148,8 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 				GLKVector2FromCGPoint(self.point3),
 				GLKVector2FromCGPoint(self.point4),
 			},
-			_outsideOfQuadUVMode
+			_outsideOfQuadUVMode,
+			4
 		);
 		NSAssert(CFDataGetLength(imageData) == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
 		

@@ -7,13 +7,6 @@
 
 
 
-#pragma mark Constants
-
-/// This blit only works with 4 components per pixel (RGBA).
-static const int kComponentCount = 4;
-
-
-
 #pragma mark Intermediate Data
 
 struct DestImageGenInfo {
@@ -27,8 +20,6 @@ struct DestImageGenInfo {
 		GLKVector2 points[4];
 		struct { GLKVector2 point1, point2, point3, point4; };
 	};
-	
-	OutsideOfQuadUVMode uvMode;
 };
 
 
@@ -164,11 +155,63 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const GLKVector2 surfaceST, const 
 	);
 }
 
+template<OutsideOfQuadUVMode tUVMode> bool normalizeTexelXY(int *x, int *y, int srcWidth, int srcHeight);
+template<> inline bool normalizeTexelXY<OutsideOfQuadUVWrap>(int *x, int *y, int srcWidth, int srcHeight)
+{
+	if (!withini(*x, 0, srcWidth - 1))
+		*x = modulo(*x, srcWidth);
+	if (!withini(*y, 0, srcHeight - 1))
+		*y = modulo(*y, srcHeight);
+	
+	return true;
+}
+template<> inline bool normalizeTexelXY<OutsideOfQuadUVClamp>(int *x, int *y, int srcWidth, int srcHeight)
+{
+	if (!withini(*x, 0, srcWidth - 1))
+		*x = clampi(*x, 0, srcWidth - 1);
+	if (!withini(*y, 0, srcHeight - 1))
+		*y = clampi(*y, 0, srcHeight - 1);
+	
+	return true;
+}
+template<> inline bool normalizeTexelXY<OutsideOfQuadUVSkip>(int *x, int *y, int srcWidth, int srcHeight)
+{
+	if (!withini(*x, 0, srcWidth - 1))
+		return false;
+	if (!withini(*y, 0, srcHeight - 1))
+		return false;
+	
+	return true;
+}
+
+template<int tComponentCount> void copyBytesToPixelFromTexel(UInt8 *texelBytes, const UInt8 *pixelBytes);
+template<> inline void copyBytesToPixelFromTexel<1>(UInt8 *pixelBytes, const UInt8 *texelBytes)
+{
+	pixelBytes[0] = texelBytes[0];
+}
+template<> inline void copyBytesToPixelFromTexel<2>(UInt8 *pixelBytes, const UInt8 *texelBytes)
+{
+	pixelBytes[0] = texelBytes[0];
+	pixelBytes[1] = texelBytes[1];
+}
+template<> inline void copyBytesToPixelFromTexel<3>(UInt8 *pixelBytes, const UInt8 *texelBytes)
+{
+	pixelBytes[0] = texelBytes[0];
+	pixelBytes[1] = texelBytes[1];
+	pixelBytes[2] = texelBytes[2];
+}
+template<> inline void copyBytesToPixelFromTexel<4>(UInt8 *pixelBytes, const UInt8 *texelBytes)
+{
+	pixelBytes[0] = texelBytes[0];
+	pixelBytes[1] = texelBytes[1];
+	pixelBytes[2] = texelBytes[2];
+	pixelBytes[3] = texelBytes[3];
+}
+
+template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
 void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixelX, const int pixelY, UInt8 *pixelByteBuffer)
 {
-	static const int kBytesPerPixel = kComponentCount;
-	
-	const struct DestImageGenInfo genInfo = *info;
+	static const int kBytesPerPixel = tComponentCount;
 	
 	static const GLKVector2 kPointUVs[4] = {
 		(GLKVector2){ .x = 0.0f, .y = 0.0f },
@@ -177,53 +220,24 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 		(GLKVector2){ .x = 1.0f, .y = 0.0f },
 	};
 	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
-		GLKVector2Make((float)pixelX / genInfo.destWidth, (float)pixelY / genInfo.destHeight),
-		genInfo.points,
+		GLKVector2Make((float)pixelX / info->destWidth, (float)pixelY / info->destHeight),
+		info->points,
 		kPointUVs
 	);
 	
-	int nearestTexelX = (int)lroundf(texelUV.s * genInfo.srcWidth_f - 0.5f);
-	int nearestTexelY = (int)lroundf(texelUV.t * genInfo.srcHeight_f - 0.5f);
+	int nearestTexelX = (int)lroundf(texelUV.s * info->srcWidth_f - 0.5f);
+	int nearestTexelY = (int)lroundf(texelUV.t * info->srcHeight_f - 0.5f);
 	
-	if (!withini(nearestTexelX, 0, genInfo.srcWidth_i - 1))
-	{
-		switch (genInfo.uvMode)
-		{
-			case OutsideOfQuadUVWrap:
-				nearestTexelX = modulo(nearestTexelX, genInfo.srcWidth_i);
-				break;
-			case OutsideOfQuadUVClamp:
-				nearestTexelX = clampi(nearestTexelX, 0, genInfo.srcWidth_i - 1);
-				break;
-			case OutsideOfQuadUVSkip:
-				return; // early out
-		}
-	}
-	if (!withini(nearestTexelY, 0, genInfo.srcHeight_i - 1))
-	{
-		switch (genInfo.uvMode)
-		{
-			case OutsideOfQuadUVWrap:
-				nearestTexelY = modulo(nearestTexelY, genInfo.srcHeight_i);
-				break;
-			case OutsideOfQuadUVClamp:
-				nearestTexelY = clampi(nearestTexelY, 0, genInfo.srcHeight_i - 1);
-				break;
-			case OutsideOfQuadUVSkip:
-				return; // early out
-		}
-	}
+	bool texelValid = normalizeTexelXY<tUVMode>(&nearestTexelX, &nearestTexelY, info->srcWidth_i, info->srcHeight_i);
+	if (!texelValid)
+		return;
 	
-	const int texelIndex = nearestTexelY * genInfo.srcWidth_i + nearestTexelX;
-	const UInt8 *texelBytes = &genInfo.srcBytes[texelIndex * kBytesPerPixel];
+	const int texelIndex = nearestTexelY * info->srcWidth_i + nearestTexelX;
+	const UInt8 *texelBytes = &info->srcBytes[texelIndex * kBytesPerPixel];
 	
 	//UInt8 nearestTexelSample[kBytesPerPixel];
-	pixelByteBuffer[0] = texelBytes[0];
-	pixelByteBuffer[1] = texelBytes[1];
-	pixelByteBuffer[2] = texelBytes[2];
-	pixelByteBuffer[3] = texelBytes[3];
+	copyBytesToPixelFromTexel<tComponentCount>(pixelByteBuffer, texelBytes);
 	
-	//memcpy(pixelByteBuffer, nearestTexelSample, kBytesPerPixel);
 	// @debug: show UVs directly
 	//pixelByteBuffer[0] = fabsf(texelUV.x) * 255.0f;
 	//pixelByteBuffer[1] = fabsf(texelUV.y) * 255.0f;
@@ -232,24 +246,28 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 }
 
 /// Returned image data buffer must be freed with free() by the caller.
-CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], OutsideOfQuadUVMode uvMode)
+template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
+CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4])
 {
+	static const size_t kBytesPerPixel = tComponentCount;
+	
+	const size_t srcByteCount = CFDataGetLength(srcData);
+	assert(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel));
+	
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
 	const struct DestImageGenInfo info = {
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
-		.srcWidth_f = srcWidth, .srcHeight_f = srcHeight,
+		.srcWidth_f = (float)srcWidth, .srcHeight_f = (float)srcHeight,
 		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
 		.point1 = points[0],
 		.point2 = points[1],
 		.point3 = points[2],
-		.point4 = points[3],
-		.uvMode = uvMode,
+		.point4 = points[3]
 	};
 	
-	static const size_t kBytesPerPixel = kComponentCount;
 	unsigned int pixelCount = destWidth * destHeight;
-	UInt8 *byteBuffer = calloc(pixelCount, kBytesPerPixel); // #000000,00-initializes
+	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, kBytesPerPixel); // transparent black-initialized
 	
 	for (int pixelX = destWidth - 1; pixelX >= 0; --pixelX) {
 		for (int pixelY = destHeight - 1; pixelY >= 0; --pixelY) {
@@ -258,10 +276,48 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 			off_t position = pixelI * kBytesPerPixel;
 			UInt8 *pixelBytes = &byteBuffer[position];
 			
-			genDestImagePixelBytes(&info, pixelX, pixelY, pixelBytes);
+			genDestImagePixelBytes<tUVMode, tComponentCount>(&info, pixelX, pixelY, pixelBytes);
 		}
 	}
 	
-	CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, byteBuffer, pixelCount * kBytesPerPixel, kCFAllocatorMalloc);
+	const size_t byteCount = pixelCount * kBytesPerPixel;
+	CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, byteBuffer, byteCount, kCFAllocatorMalloc);
 	return data;
+}
+
+template<OutsideOfQuadUVMode tUVMode>
+inline CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], int channelCount)
+{
+	switch (channelCount)
+	{
+		case 1:
+			return createDestImageData<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+		case 2:
+			return createDestImageData<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+		case 3:
+			return createDestImageData<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+		case 4:
+			return createDestImageData<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+		
+		default:
+			assert(channelCount >= 1 && channelCount <= 4);
+			return NULL;
+	}
+}
+
+CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], OutsideOfQuadUVMode uvMode, int channelCount)
+{
+	switch (uvMode)
+	{
+		case OutsideOfQuadUVWrap:
+			return createDestImageData<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+		case OutsideOfQuadUVClamp:
+			return createDestImageData<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+		case OutsideOfQuadUVSkip:
+			return createDestImageData<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+		
+		default:
+			assert(false); // not a valid uvMode
+			return NULL;
+	}
 }
