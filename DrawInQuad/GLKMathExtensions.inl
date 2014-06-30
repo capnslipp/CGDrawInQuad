@@ -38,3 +38,23 @@ static inline GLKVector2 GLKVector2Perp(GLKVector2 vector)
 {
 	return GLKVector2Make(-vector.y, vector.x);
 }
+
+static inline GLKVector2 GLKVector2Avg2(GLKVector2 vectorA, GLKVector2 vectorB)
+{
+	GLKVector2 sum = GLKVector2Add(vectorA, vectorB);
+	return GLKVector2MultiplyScalar(sum, 0.5f);
+}
+
+static inline GLKVector2 GLKVector2Avg3(GLKVector2 vectorA, GLKVector2 vectorB, GLKVector2 vectorC)
+{
+	static const float kFloatOneThird = 0.33333333f; // any additional '3' digits give no better float precision
+
+	GLKVector2 sum = GLKVector2Add(GLKVector2Add(vectorA, vectorB), vectorC);
+	return GLKVector2MultiplyScalar(sum, kFloatOneThird);
+}
+
+static inline GLKVector2 GLKVector2Avg4(GLKVector2 vectorA, GLKVector2 vectorB, GLKVector2 vectorC, GLKVector2 vectorD)
+{
+	GLKVector2 sum = GLKVector2Add(GLKVector2Add(GLKVector2Add(vectorA, vectorB), vectorC), vectorD);
+	return GLKVector2MultiplyScalar(sum, 0.25f);
+}
