@@ -308,7 +308,6 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 	// hack to avoid `… / 0 = NaN` issues:
 	info.segment03LengthSqr = GLKVector2AllEqualToScalar(info.segment03Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment03Delta);
 	info.segment12LengthSqr = GLKVector2AllEqualToScalar(info.segment12Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment12Delta);
-	printf("segment03LengthSqr: %30.50f, segment12LengthSqr: %30.50f\n", info.segment03LengthSqr, info.segment12LengthSqr);
 	
 	unsigned int pixelCount = destWidth * destHeight;
 	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, kBytesPerPixel); // transparent black-initialized
