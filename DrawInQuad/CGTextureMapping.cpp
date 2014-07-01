@@ -18,13 +18,23 @@ struct DestImageGenInfo {
 	
 	union {
 		GLKVector2 points[4];
-		struct { GLKVector2 point1, point2, point3, point4; };
+		struct { GLKVector2 point0, point1, point2, point3; };
+	};
+	GLKVector2 segment03Delta, segment12Delta;
+	float segment03LengthSqr, segment12LengthSqr;
+	
+	union {
+		GLKVector2 pointUVs[4];
+		struct { GLKVector2 pointUV0, pointUV1, pointUV2, pointUV3; };
 	};
 };
 
 
 
 #pragma mark Util Functions
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 
 static inline int modulo(int dividendA, int divisorN)
 {
@@ -53,23 +63,40 @@ static inline bool withini(int v, int l, int h)
 	return v >= l && v <= h;
 }
 
-static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 *out_nearestPoint)
+static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr, GLKVector2 *out_nearestPoint)
 {
-	GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
 	GLKVector2 freeToADelta = GLKVector2Subtract(freePoint, segmentAPoint);
 	
-	float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / GLKVector2LengthSqr(segmentDelta);
+	float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / segmentLengthSqr;
 	
-	if (out_nearestPoint != NULL) {
-		if (ratioAlongSegment <= 0.0f)
-			*out_nearestPoint = segmentAPoint;
-		else if (ratioAlongSegment >= 1.0f)
-			*out_nearestPoint = segmentBPoint;
-		else
-			*out_nearestPoint = GLKVector2Add(segmentAPoint, GLKVector2MultiplyScalar(segmentDelta, ratioAlongSegment));
-	}
+	if (ratioAlongSegment <= 0.0f)
+		*out_nearestPoint = segmentAPoint;
+	else if (ratioAlongSegment >= 1.0f)
+		*out_nearestPoint = segmentBPoint;
+	else
+		*out_nearestPoint = GLKVector2Add(segmentAPoint, GLKVector2MultiplyScalar(segmentDelta, ratioAlongSegment));
 	
 	return ratioAlongSegment;
+}
+/// segmentDelta and segmentLengthSqr calculated on-the-fly
+static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 *out_nearestPoint) {
+	GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
+	float segmentLengthSqr = GLKVector2LengthSqr(segmentDelta);
+	return ratioAndNearestPointAlongSegment(freePoint, segmentAPoint, segmentBPoint, segmentDelta, segmentLengthSqr, out_nearestPoint);
+}
+
+static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr)
+{
+	GLKVector2 freeToADelta = GLKVector2Subtract(freePoint, segmentAPoint);
+	
+	float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / segmentLengthSqr;
+	return ratioAlongSegment;
+}
+/// segmentDelta and segmentLengthSqr calculated on-the-fly
+static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint) {
+	GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
+	float segmentLengthSqr = GLKVector2LengthSqr(segmentDelta); // @warning: potentially zero, causings NaN to get returned
+	return ratioAlongSegment(freePoint, segmentAPoint, segmentBPoint, segmentDelta, segmentLengthSqr);
 }
 
 /// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
@@ -92,22 +119,33 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 	return GLKVector3Make(1.0f - v - w, v, w);
 }
 
+#pragma clang diagnostic pop // ignored "-Wunused-function"
+
 
 #pragma mark Texture Mapping Functions
 
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
 /// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
-GLKVector2 surfaceSTToTexelUV_bilinearQuad(const GLKVector2 surfaceST, const GLKVector2 pointSTs[4], const GLKVector2 pointUVs[4])
+GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
 {
 	GLKVector2 nearestPointOn03Segment, nearestPointOn12Segment;
-	float ratioAlong03 = ratioAlongSegment(surfaceST, pointSTs[0], pointSTs[3], &nearestPointOn03Segment);
-	float ratioAlong12 = ratioAlongSegment(surfaceST, pointSTs[1], pointSTs[2], &nearestPointOn12Segment);
+	float ratioAlong03 = ratioAndNearestPointAlongSegment(
+		surfaceST,
+		info->point0, info->point3,
+		info->segment03Delta, info->segment03LengthSqr,
+		&nearestPointOn03Segment
+	);
+	float ratioAlong12 = ratioAndNearestPointAlongSegment(
+		surfaceST,
+		info->point1, info->point2,
+		info->segment12Delta, info->segment12LengthSqr,
+		&nearestPointOn12Segment
+	);
 	
-	GLKVector2 nearestPointOn03SegmentUV = GLKVector2Lerp(pointUVs[0], pointUVs[3], ratioAlong03);
-	GLKVector2 nearestPointOn12SegmentUV = GLKVector2Lerp(pointUVs[1], pointUVs[2], ratioAlong12);
-	
-	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment, NULL);
+	GLKVector2 nearestPointOn03SegmentUV = GLKVector2Lerp(info->pointUV0, info->pointUV3, ratioAlong03);
+	GLKVector2 nearestPointOn12SegmentUV = GLKVector2Lerp(info->pointUV1, info->pointUV2, ratioAlong12);
+	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment);
 	
 	GLKVector2 texelUV = GLKVector2Lerp(nearestPointOn03SegmentUV, nearestPointOn12SegmentUV, ratioBetweenNearest03And12);
 	return texelUV;
@@ -127,15 +165,15 @@ GLKVector2 surfaceSTToTexelUV_barycentricTri(const GLKVector2 surfaceST, const G
 	return texelUV;
 }
 
-GLKVector2 surfaceSTToTexelUV_barycentricQuad(const GLKVector2 surfaceST, const GLKVector2 pointSTs[4], const GLKVector2 pointUVs[4])
+GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
 {
 	static const int kStarboardTriInQuadIndices[3] = { 0, 1, 2 };
 	static const int kPortTriInQuadIndices[3] = { 0, 2, 3 };
 	
 	//// @source http://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 	float lineVsPointCross = GLKVector2CrossProduct(
-		GLKVector2Subtract(pointSTs[2], pointSTs[0]),
-		GLKVector2Subtract(surfaceST, pointSTs[0])
+		GLKVector2Subtract(info->point2, info->point0),
+		GLKVector2Subtract(surfaceST, info->point0)
 	);
 	bool starboardSide = lineVsPointCross > 0.0f;
 	
@@ -143,14 +181,14 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const GLKVector2 surfaceST, const 
 	return surfaceSTToTexelUV_barycentricTri(
 		surfaceST,
 		(GLKVector2[3]){
-			pointSTs[triInQuadIndices[0]],
-			pointSTs[triInQuadIndices[1]],
-			pointSTs[triInQuadIndices[2]]
+			info->points[triInQuadIndices[0]],
+			info->points[triInQuadIndices[1]],
+			info->points[triInQuadIndices[2]]
 		},
 		(GLKVector2[3]){
-			pointUVs[triInQuadIndices[0]],
-			pointUVs[triInQuadIndices[1]],
-			pointUVs[triInQuadIndices[2]]
+			info->pointUVs[triInQuadIndices[0]],
+			info->pointUVs[triInQuadIndices[1]],
+			info->pointUVs[triInQuadIndices[2]]
 		}
 	);
 }
@@ -213,16 +251,12 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 {
 	static const int kBytesPerPixel = tComponentCount;
 	
-	static const GLKVector2 kPointUVs[4] = {
-		(GLKVector2){ .x = 0.0f, .y = 0.0f },
-		(GLKVector2){ .x = 0.0f, .y = 1.0f },
-		(GLKVector2){ .x = 1.0f, .y = 1.0f },
-		(GLKVector2){ .x = 1.0f, .y = 0.0f },
-	};
 	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
-		GLKVector2Make((float)pixelX / info->destWidth, (float)pixelY / info->destHeight),
-		info->points,
-		kPointUVs
+		info,
+		GLKVector2Make(
+			(float)pixelX / info->destWidth,
+			(float)pixelY / info->destHeight
+		)
 	);
 	
 	int nearestTexelX = (int)lroundf(texelUV.s * info->srcWidth_f - 0.5f);
@@ -255,16 +289,26 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 	assert(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel));
 	
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
-	const struct DestImageGenInfo info = {
+	struct DestImageGenInfo info = {
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
 		.srcWidth_f = (float)srcWidth, .srcHeight_f = (float)srcHeight,
 		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
-		.point1 = points[0],
-		.point2 = points[1],
-		.point3 = points[2],
-		.point4 = points[3]
+		.point0 = points[0],
+		.point1 = points[1],
+		.point2 = points[2],
+		.point3 = points[3],
+		.pointUV0 = GLKVector2Make(0.0f, 0.0f),
+		.pointUV1 = GLKVector2Make(0.0f, 1.0f),
+		.pointUV2 = GLKVector2Make(1.0f, 1.0f),
+		.pointUV3 = GLKVector2Make(1.0f, 0.0f),
 	};
+	info.segment03Delta = GLKVector2Subtract(info.point3, info.point0);
+	info.segment12Delta = GLKVector2Subtract(info.point2, info.point1);
+	// hack to avoid `… / 0 = NaN` issues:
+	info.segment03LengthSqr = GLKVector2AllEqualToScalar(info.segment03Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment03Delta);
+	info.segment12LengthSqr = GLKVector2AllEqualToScalar(info.segment12Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment12Delta);
+	printf("segment03LengthSqr: %30.50f, segment12LengthSqr: %30.50f\n", info.segment03LengthSqr, info.segment12LengthSqr);
 	
 	unsigned int pixelCount = destWidth * destHeight;
 	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, kBytesPerPixel); // transparent black-initialized
