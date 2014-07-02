@@ -35,11 +35,11 @@
                                 </userDefinedRuntimeAttributes>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="fill" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="clip" id="EI2-ay-057">
-                                <rect key="frame" x="96" y="137" width="57" height="44"/>
+                                <rect key="frame" x="96" y="247" width="57" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
                                 <inset key="contentEdgeInsets" minX="14" minY="7" maxX="14" maxY="7"/>
-                                <state key="normal" title="1" backgroundImage="UISwitchKnob">
+                                <state key="normal" title="AS" backgroundImage="UISwitchKnob">
                                     <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </state>
@@ -48,11 +48,11 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="fill" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" lineBreakMode="clip" id="ab4-XA-3fF">
-                                <rect key="frame" x="96" y="247" width="57" height="44"/>
+                                <rect key="frame" x="96" y="137" width="57" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
                                 <inset key="contentEdgeInsets" minX="14" minY="7" maxX="14" maxY="7"/>
-                                <state key="normal" title="2" backgroundImage="UISwitchKnob">
+                                <state key="normal" title="AP" backgroundImage="UISwitchKnob">
                                     <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </state>
@@ -65,7 +65,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
                                 <inset key="contentEdgeInsets" minX="14" minY="7" maxX="14" maxY="7"/>
-                                <state key="normal" title="3" backgroundImage="UISwitchKnob">
+                                <state key="normal" title="FS" backgroundImage="UISwitchKnob">
                                     <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </state>
@@ -78,7 +78,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
                                 <inset key="contentEdgeInsets" minX="14" minY="7" maxX="14" maxY="7"/>
-                                <state key="normal" title="4" backgroundImage="UISwitchKnob">
+                                <state key="normal" title="FP" backgroundImage="UISwitchKnob">
                                     <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </state>

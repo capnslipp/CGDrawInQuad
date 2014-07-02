@@ -266,8 +266,8 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 	
 	[self switchToOutsideOfQuadUVMode:_outsideOfQuadUVMode];
 	
-	self.point1 = CGPointMake(0.00f, 0.00f);
-	self.point2 = CGPointMake(0.05f, 0.95f);
+	self.point1 = CGPointMake(0.05f, 0.95f);
+	self.point2 = CGPointMake(0.00f, 0.00f);
 	self.point3 = CGPointMake(0.8f, 0.8f);
 	self.point4 = CGPointMake(0.90f, 0.10f);
 	

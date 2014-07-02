@@ -75,7 +75,11 @@
 		CGMutablePathRef newPath = CGPathCreateMutable();
 		
 		CGAffineTransform transform = self.pointToScreenCoordTransform;
-		CGPathAddLines(newPath, &transform, _points, _pointCount);
+		// OpenGL clockwise quad rendering order 0, 1, 3, 2
+		CGPathMoveToPoint(newPath, &transform, _points[0].x, _points[0].y);
+		CGPathAddLineToPoint(newPath, &transform, _points[1].x, _points[1].y);
+		CGPathAddLineToPoint(newPath, &transform, _points[3].x, _points[3].y);
+		CGPathAddLineToPoint(newPath, &transform, _points[2].x, _points[2].y);
 		CGPathCloseSubpath(newPath);
 		
 		CGPathRelease(_path);

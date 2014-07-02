@@ -9,6 +9,10 @@
 
 #pragma mark Intermediate Data
 
+/// `Aft`: Aft end
+/// `Fore`: Fore end
+/// `Star`: Starboard side
+/// `Port`: Port side
 struct DestImageGenInfo {
 	int srcWidth_i, srcHeight_i;
 	float srcWidth_f, srcHeight_f;
@@ -18,13 +22,15 @@ struct DestImageGenInfo {
 	
 	union {
 		GLKVector2 points[4];
-		struct { GLKVector2 point0, point1, point2, point3; };
+		struct { GLKVector2 pointAftStar, pointAftPort, pointForeStar, pointForePort; };
 	};
-	GLKVector2 segment03Delta, segment12Delta;
-	float segment03LengthSqr, segment12LengthSqr;
+	
+	GLKVector2 segmentAftDelta, segmentForeDelta;
+	float segmentAftLengthSqr, segmentForeLengthSqr;
 	
 	union {
 		GLKVector2 pointUVs[4];
+		/// specified in standard clockwise OpenGL quad/quadstrip order: back-right, back-left, front-right, front-left
 		struct { GLKVector2 pointUV0, pointUV1, pointUV2, pointUV3; };
 	};
 };
@@ -129,25 +135,25 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
 GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
 {
-	GLKVector2 nearestPointOn03Segment, nearestPointOn12Segment;
-	float ratioAlong03 = ratioAndNearestPointAlongSegment(
+	GLKVector2 nearestPointOnAft, nearestPointOnFore;
+	float ratioAlongAft = ratioAndNearestPointAlongSegment(
 		surfaceST,
-		info->point0, info->point3,
-		info->segment03Delta, info->segment03LengthSqr,
-		&nearestPointOn03Segment
+		info->pointAftStar, info->pointAftPort,
+		info->segmentAftDelta, info->segmentAftLengthSqr,
+		&nearestPointOnAft
 	);
-	float ratioAlong12 = ratioAndNearestPointAlongSegment(
+	float ratioAlongFore = ratioAndNearestPointAlongSegment(
 		surfaceST,
-		info->point1, info->point2,
-		info->segment12Delta, info->segment12LengthSqr,
-		&nearestPointOn12Segment
+		info->pointForeStar, info->pointForePort,
+		info->segmentForeDelta, info->segmentForeLengthSqr,
+		&nearestPointOnFore
 	);
 	
-	GLKVector2 nearestPointOn03SegmentUV = GLKVector2Lerp(info->pointUV0, info->pointUV3, ratioAlong03);
-	GLKVector2 nearestPointOn12SegmentUV = GLKVector2Lerp(info->pointUV1, info->pointUV2, ratioAlong12);
-	float ratioBetweenNearest03And12 = ratioAlongSegment(surfaceST, nearestPointOn03Segment, nearestPointOn12Segment);
+	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info->pointUV0, info->pointUV1, ratioAlongAft);
+	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info->pointUV2, info->pointUV3, ratioAlongFore);
+	float ratioAlongNearestAftToNearestFore = ratioAlongSegment(surfaceST, nearestPointOnAft, nearestPointOnFore);
 	
-	GLKVector2 texelUV = GLKVector2Lerp(nearestPointOn03SegmentUV, nearestPointOn12SegmentUV, ratioBetweenNearest03And12);
+	GLKVector2 texelUV = GLKVector2Lerp(uvOfNearestPointOnAft, uvOfNearestPointOnFore, ratioAlongNearestAftToNearestFore);
 	return texelUV;
 }
 
@@ -167,17 +173,17 @@ GLKVector2 surfaceSTToTexelUV_barycentricTri(const GLKVector2 surfaceST, const G
 
 GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
 {
-	static const int kStarboardTriInQuadIndices[3] = { 0, 1, 2 };
-	static const int kPortTriInQuadIndices[3] = { 0, 2, 3 };
+	static const int kAftStarTriInQuadIndices[3] = { 0, 1, 2 };
+	static const int kForePortTriInQuadIndices[3] = { 1, 3, 2 };
 	
 	//// @source http://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 	float lineVsPointCross = GLKVector2CrossProduct(
-		GLKVector2Subtract(info->point2, info->point0),
-		GLKVector2Subtract(surfaceST, info->point0)
+		GLKVector2Subtract(info->pointForeStar, info->pointAftPort),
+		GLKVector2Subtract(surfaceST, info->pointAftPort)
 	);
-	bool starboardSide = lineVsPointCross > 0.0f;
+	bool inAftStarTri = lineVsPointCross > 0.0f;
 	
-	const int *triInQuadIndices = starboardSide ? kStarboardTriInQuadIndices : kPortTriInQuadIndices;
+	const int *triInQuadIndices = inAftStarTri ? kAftStarTriInQuadIndices : kForePortTriInQuadIndices;
 	return surfaceSTToTexelUV_barycentricTri(
 		surfaceST,
 		(GLKVector2[3]){
@@ -294,20 +300,20 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 		.srcWidth_f = (float)srcWidth, .srcHeight_f = (float)srcHeight,
 		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
-		.point0 = points[0],
-		.point1 = points[1],
-		.point2 = points[2],
-		.point3 = points[3],
-		.pointUV0 = GLKVector2Make(0.0f, 0.0f),
-		.pointUV1 = GLKVector2Make(0.0f, 1.0f),
-		.pointUV2 = GLKVector2Make(1.0f, 1.0f),
-		.pointUV3 = GLKVector2Make(1.0f, 0.0f),
+		.pointAftStar = points[0],
+		.pointAftPort = points[1],
+		.pointForeStar = points[2],
+		.pointForePort = points[3],
+		.pointUV0 = GLKVector2Make(1, 0),
+		.pointUV1 = GLKVector2Make(0, 0),
+		.pointUV2 = GLKVector2Make(1, 1),
+		.pointUV3 = GLKVector2Make(0, 1),
 	};
-	info.segment03Delta = GLKVector2Subtract(info.point3, info.point0);
-	info.segment12Delta = GLKVector2Subtract(info.point2, info.point1);
+	info.segmentAftDelta = GLKVector2Subtract(info.pointAftPort, info.pointAftStar);
+	info.segmentForeDelta = GLKVector2Subtract(info.pointForePort, info.pointForeStar);
 	// hack to avoid `… / 0 = NaN` issues:
-	info.segment03LengthSqr = GLKVector2AllEqualToScalar(info.segment03Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment03Delta);
-	info.segment12LengthSqr = GLKVector2AllEqualToScalar(info.segment12Delta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segment12Delta);
+	info.segmentAftLengthSqr = GLKVector2AllEqualToScalar(info.segmentAftDelta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segmentAftDelta);
+	info.segmentForeLengthSqr = GLKVector2AllEqualToScalar(info.segmentForeDelta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segmentForeDelta);
 	
 	unsigned int pixelCount = destWidth * destHeight;
 	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, kBytesPerPixel); // transparent black-initialized
