@@ -157,7 +157,7 @@ UInt8 * fetchDestImageBuffer_callback(void *info, int pixelCount, size_t bytesPe
 		
 		uint64_t startTime_nSec = getAccurateSystemTime_nSec();
 		
-		CFDataRef imageData = createDestImageData(
+		CFDataRef imageData = cgTextureMappingBlit(
 			_srcWidth, _srcHeight, _srcData,
 			_destWidth, _destHeight,
 			(GLKVector2[4]){

@@ -22,7 +22,7 @@ typedef UInt8 * DestBufferAllocator(void *info, int pixelCount, size_t bytesPerP
 #ifdef __cplusplus
 	/// @arg points: Specified in standard OpenGL quad/quadstrip order: back-right, back-left, front-right, front-left
 	template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
-	CFDataRef createDestImageData(
+	CFDataRef cgTextureMappingBlit(
 		int srcWidth, int srcHeight, CFDataRef srcData,
 		int destWidth, int destHeight,
 		GLKVector2 points[4],
@@ -37,7 +37,7 @@ typedef UInt8 * DestBufferAllocator(void *info, int pixelCount, size_t bytesPerP
 
 /// @arg destBufferAllocator: A DestBufferAllocator function to use for allocation of the memory that'll be returned, or NULL to use the default allocater.
 /// @arg destBufferAllocatorInfo: A pointer to data of any type or NULL.  When the destBufferAllocator is called, it is sent this pointer.
-CFDataRef createDestImageData(
+CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	GLKVector2 points[4],

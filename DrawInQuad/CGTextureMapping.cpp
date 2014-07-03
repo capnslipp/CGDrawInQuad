@@ -301,7 +301,7 @@ UInt8 * defaultDestBufferAllocator(void *_, int pixelCount, size_t bytesPerPixel
 
 /// Returned image data buffer must be freed with free() by the caller.
 template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
-CFDataRef createDestImageData(
+CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	GLKVector2 points[4],
@@ -361,7 +361,7 @@ CFDataRef createDestImageData(
 }
 
 template<OutsideOfQuadUVMode tUVMode>
-inline CFDataRef createDestImageData(
+inline CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	GLKVector2 points[4],
@@ -372,13 +372,13 @@ inline CFDataRef createDestImageData(
 	switch (channelCount)
 	{
 		case 1:
-			return createDestImageData<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 2:
-			return createDestImageData<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 3:
-			return createDestImageData<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 4:
-			return createDestImageData<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(channelCount >= 1 && channelCount <= 4);
@@ -386,7 +386,7 @@ inline CFDataRef createDestImageData(
 	}
 }
 
-CFDataRef createDestImageData(
+CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	GLKVector2 points[4],
@@ -397,11 +397,11 @@ CFDataRef createDestImageData(
 	switch (uvMode)
 	{
 		case OutsideOfQuadUVWrap:
-			return createDestImageData<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVClamp:
-			return createDestImageData<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVSkip:
-			return createDestImageData<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(false); // not a valid uvMode
