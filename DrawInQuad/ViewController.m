@@ -62,6 +62,7 @@ static NSArray *kOutsideOfQuadUVModeNames;
 	UIImage *_destImage;
 	size_t _destByteCount;
 	int _destWidth, _destHeight;
+	UInt8 *_destByteBuffer;
 	
 	OutsideOfQuadUVMode _outsideOfQuadUVMode;
 	QBPopupMenu *_outsideOfQuadUVModePopupMenu;
@@ -115,6 +116,19 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 	return GLKVector2Make(point.x, point.y);
 }
 
+UInt8 * fetchDestImageBuffer_callback(void *info, int pixelCount, size_t bytesPerPixel, bool *out_takeOwnership)
+{
+	ViewController *self = (__bridge ViewController *)info;
+	
+	assert(self->_destByteCount >= (pixelCount * bytesPerPixel));
+	
+	if (self->_outsideOfQuadUVMode == OutsideOfQuadUVSkip)
+		memset(self->_destByteBuffer, 0x00, self->_destByteCount); // clear to transparent-black
+	
+	*out_takeOwnership = NO;
+	return self->_destByteBuffer;
+}
+
 - (UIImage *)destImage
 {
 	if (!_destImage) {
@@ -134,11 +148,15 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 		size_t bitsPerPixel = bitsPerComponent * kComponentCount;
 		size_t bitsPerRow = bitsPerPixel * width,
 			bytesPerRow = bitsPerRow >> 3;
-		_destByteCount = bytesPerRow * height;
+		size_t destByteCount = bytesPerRow * height;
+		
+		if (_destByteBuffer == NULL || destByteCount != _destByteCount) {
+			_destByteBuffer = realloc(_destByteBuffer, destByteCount);
+			_destByteCount = destByteCount;
+		}
 		
 		uint64_t startTime_nSec = getAccurateSystemTime_nSec();
 		
-		size_t createdByteCount = 0;
 		CFDataRef imageData = createDestImageData(
 			_srcWidth, _srcHeight, _srcData,
 			_destWidth, _destHeight,
@@ -149,9 +167,13 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 				GLKVector2FromCGPoint(self.point4),
 			},
 			_outsideOfQuadUVMode,
-			4
+			4,
+			fetchDestImageBuffer_callback, (__bridge void *)self
 		);
-		NSAssert(CFDataGetLength(imageData) == _destByteCount, @"Number of bytes generated (%zu) does not match calculated total byte count (%zu).", createdByteCount, _destByteCount);
+		NSAssert(CFDataGetLength(imageData) == _destByteCount,
+			@"Number of bytes generated (%zu) does not match calculated total byte count (%zu).",
+			CFDataGetLength(imageData), _destByteCount
+		);
 		
 		// The advange of using a CFData with CGDataProviderCreateWithCFData() over CGDataProviderCreateWithData() is that the data is ref-counted, and in this function we can release-it-and-forget-it.
 		// Specifically: `imageData` is now owned by `data`, which after this function's scope is owned by `dataProvider` which is owned by `destCGImage`, which is owned by `_destImage`.
@@ -289,6 +311,9 @@ static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
 		CFRelease(_srcData);
 		_srcData = NULL;
 	}
+	
+	free(_destByteBuffer);
+	_destByteBuffer = NULL;
 }
 
 - (void)viewDidLayoutSubviews

@@ -7,6 +7,11 @@
 
 
 
+#pragma mark Constants
+
+static const uint8_t kInvalidBoolValue = 0xff;
+
+
 #pragma mark Intermediate Data
 
 /// `Aft`: Aft end
@@ -285,11 +290,27 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 	//pixelByteBuffer[3] = 255;
 }
 
+UInt8 * defaultDestBufferAllocator(void *_, int pixelCount, size_t bytesPerPixel, bool *out_takeOwnership)
+{
+	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, bytesPerPixel); // transparent black-initialized
+	
+	*out_takeOwnership = true;
+	return byteBuffer;
+}
+
 /// Returned image data buffer must be freed with free() by the caller.
 template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
-CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4])
+CFDataRef createDestImageData(
+	int srcWidth, int srcHeight, CFDataRef srcData,
+	int destWidth, int destHeight,
+	GLKVector2 points[4],
+	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
+)
 {
 	static const size_t kBytesPerPixel = tComponentCount;
+	
+	if (destBufferAllocator == NULL)
+		destBufferAllocator = defaultDestBufferAllocator;
 	
 	const size_t srcByteCount = CFDataGetLength(srcData);
 	assert(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel));
@@ -316,7 +337,11 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 	info.segmentForeLengthSqr = GLKVector2AllEqualToScalar(info.segmentForeDelta, 0.0f) ? FLT_MIN : GLKVector2LengthSqr(info.segmentForeDelta);
 	
 	unsigned int pixelCount = destWidth * destHeight;
-	UInt8 *byteBuffer = (UInt8 *)calloc(pixelCount, kBytesPerPixel); // transparent black-initialized
+	
+	// kinda awesome trick to check that the destBufferAllocator actually changed the value of its `out_takeOwnership` arg
+	union { bool should; uint8_t asUint8; } takeOwnership = { .asUint8 = kInvalidBoolValue };
+	UInt8 *byteBuffer = destBufferAllocator(destBufferAllocatorInfo, pixelCount, kBytesPerPixel, &takeOwnership.should);
+	assert(takeOwnership.asUint8 != kInvalidBoolValue); // you really do have to set the variable
 	
 	for (int pixelX = destWidth - 1; pixelX >= 0; --pixelX) {
 		for (int pixelY = destHeight - 1; pixelY >= 0; --pixelY) {
@@ -330,23 +355,29 @@ CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, in
 	}
 	
 	const size_t byteCount = pixelCount * kBytesPerPixel;
-	CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, byteBuffer, byteCount, kCFAllocatorMalloc);
+	CFDataRef data = CFDataCreateWithBytesNoCopy(NULL, byteBuffer, byteCount, takeOwnership.should ? kCFAllocatorMalloc : kCFAllocatorNull);
 	return data;
 }
 
 template<OutsideOfQuadUVMode tUVMode>
-inline CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], int channelCount)
+inline CFDataRef createDestImageData(
+	int srcWidth, int srcHeight, CFDataRef srcData,
+	int destWidth, int destHeight,
+	GLKVector2 points[4],
+	int channelCount,
+	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
+)
 {
 	switch (channelCount)
 	{
 		case 1:
-			return createDestImageData<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+			return createDestImageData<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 2:
-			return createDestImageData<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+			return createDestImageData<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 3:
-			return createDestImageData<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+			return createDestImageData<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		case 4:
-			return createDestImageData<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points);
+			return createDestImageData<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(channelCount >= 1 && channelCount <= 4);
@@ -354,16 +385,22 @@ inline CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcD
 	}
 }
 
-CFDataRef createDestImageData(int srcWidth, int srcHeight, CFDataRef srcData, int destWidth, int destHeight, GLKVector2 points[4], OutsideOfQuadUVMode uvMode, int channelCount)
+CFDataRef createDestImageData(
+	int srcWidth, int srcHeight, CFDataRef srcData,
+	int destWidth, int destHeight,
+	GLKVector2 points[4],
+	OutsideOfQuadUVMode uvMode, int channelCount,
+	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
+)
 {
 	switch (uvMode)
 	{
 		case OutsideOfQuadUVWrap:
-			return createDestImageData<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+			return createDestImageData<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVClamp:
-			return createDestImageData<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+			return createDestImageData<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVSkip:
-			return createDestImageData<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount);
+			return createDestImageData<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(false); // not a valid uvMode
