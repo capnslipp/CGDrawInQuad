@@ -58,3 +58,31 @@ static inline GLKVector2 GLKVector2Avg4(GLKVector2 vectorA, GLKVector2 vectorB, 
 	GLKVector2 sum = GLKVector2Add(GLKVector2Add(GLKVector2Add(vectorA, vectorB), vectorC), vectorD);
 	return GLKVector2MultiplyScalar(sum, 0.25f);
 }
+
+static inline float GLKVector2Angle(GLKVector2 vector)
+{
+ 	return atan2f(vector.y, vector.x);
+}
+
+static inline GLKVector2 GLKVector2Slerp(GLKVector2 vectorStart, GLKVector2 vectorEnd, float t)
+{
+	if (t <= 0.0f)
+		return vectorStart;
+	else if (t >= 1.0f)
+		return vectorEnd;
+	
+	float angleStart = GLKVector2Angle(vectorStart),
+		angleEnd = GLKVector2Angle(vectorEnd);
+	float angleDelta = angleEnd - angleStart;
+	float angle = angleStart + angleDelta * t;
+	
+	float lengthStart = GLKVector2Length(vectorEnd),
+		lengthEnd = GLKVector2Length(vectorEnd);
+	float length = lengthStart + (lengthEnd - lengthStart) * t;
+	
+	GLKVector2 vector = GLKVector2Make(
+		cosf(angle) * length, // Cos(angle) * Hyp = Adj
+		sinf(angle) * length // Sin(angle) * Hyp = Opp
+	);
+	return vector;
+}

@@ -21,6 +21,12 @@ static inline GLKVector2 GLKVector2Avg2(GLKVector2 vectorA, GLKVector2 vectorB);
 static inline GLKVector2 GLKVector2Avg3(GLKVector2 vectorA, GLKVector2 vectorB, GLKVector2 vectorC);
 static inline GLKVector2 GLKVector2Avg4(GLKVector2 vectorA, GLKVector2 vectorB, GLKVector2 vectorC, GLKVector2 vectorD);
 
+/// Angle in radians; X+ is 0° increasing counter-clockwise until 180° (PI), then -180° back to 0°.
+static inline float GLKVector2Angle(GLKVector2 vector);
+
+/// Slerp (angle and magnitude-lerp) for GLKVector2
+static inline GLKVector2 GLKVector2Slerp(GLKVector2 vectorStart, GLKVector2 vectorEnd, float t);
+
 
 
 #include "GLKMathExtensions.inl"
