@@ -20,7 +20,7 @@ static const uint8_t kInvalidBoolValue = 0xff;
 /// `Port`: Port side
 struct DestImageGenInfo {
 	int srcWidth_i, srcHeight_i;
-	float srcWidth_f, srcHeight_f;
+	GLKVector2 srcSize_v2;
 	const UInt8 * srcBytes;
 	
 	int destWidth, destHeight;
@@ -270,8 +270,9 @@ void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixel
 		)
 	);
 	
-	int nearestTexelX = (int)lroundf(texelUV.s * info->srcWidth_f - 0.5f);
-	int nearestTexelY = (int)lroundf(texelUV.t * info->srcHeight_f - 0.5f);
+	GLKVector2 texelXY = GLKVector2Multiply(texelUV, info->srcSize_v2);
+	int nearestTexelX = (texelXY.x >= 0.0f) ? (int)texelXY.x : ((int)texelXY.x - 1),
+		nearestTexelY = (texelXY.y >= 0.0f) ? (int)texelXY.y : ((int)texelXY.y - 1);
 	
 	bool texelValid = normalizeTexelXY<tUVMode>(&nearestTexelX, &nearestTexelY, info->srcWidth_i, info->srcHeight_i);
 	if (!texelValid)
@@ -318,7 +319,7 @@ CFDataRef createDestImageData(
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
 	struct DestImageGenInfo info = {
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
-		.srcWidth_f = (float)srcWidth, .srcHeight_f = (float)srcHeight,
+		.srcSize_v2 = GLKVector2Make(srcWidth, srcHeight),
 		.srcBytes = srcBytes,
 		.destWidth = destWidth, .destHeight = destHeight,
 		.pointAftStar = points[0],
