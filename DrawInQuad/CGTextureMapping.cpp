@@ -138,24 +138,24 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
 /// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
-GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
+GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, const GLKVector2 surfaceST)
 {
 	GLKVector2 nearestPointOnAft, nearestPointOnFore;
 	float ratioAlongAft = ratioAndNearestPointAlongSegment(
 		surfaceST,
-		info->pointAftStar, info->pointAftPort,
-		info->segmentAftDelta, info->segmentAftLengthSqr,
+		info.pointAftStar, info.pointAftPort,
+		info.segmentAftDelta, info.segmentAftLengthSqr,
 		&nearestPointOnAft
 	);
 	float ratioAlongFore = ratioAndNearestPointAlongSegment(
 		surfaceST,
-		info->pointForeStar, info->pointForePort,
-		info->segmentForeDelta, info->segmentForeLengthSqr,
+		info.pointForeStar, info.pointForePort,
+		info.segmentForeDelta, info.segmentForeLengthSqr,
 		&nearestPointOnFore
 	);
 	
-	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info->pointUV0, info->pointUV1, ratioAlongAft);
-	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info->pointUV2, info->pointUV3, ratioAlongFore);
+	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info.pointUV0, info.pointUV1, ratioAlongAft);
+	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info.pointUV2, info.pointUV3, ratioAlongFore);
 	float ratioAlongNearestAftToNearestFore = ratioAlongSegment(surfaceST, nearestPointOnAft, nearestPointOnFore);
 	
 	GLKVector2 texelUV = GLKVector2Lerp(uvOfNearestPointOnAft, uvOfNearestPointOnFore, ratioAlongNearestAftToNearestFore);
@@ -176,15 +176,15 @@ GLKVector2 surfaceSTToTexelUV_barycentricTri(const GLKVector2 surfaceST, const G
 	return texelUV;
 }
 
-GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo *info, const GLKVector2 surfaceST)
+GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo &info, const GLKVector2 surfaceST)
 {
 	static const int kAftStarTriInQuadIndices[3] = { 0, 1, 2 };
 	static const int kForePortTriInQuadIndices[3] = { 1, 3, 2 };
 	
 	//// @source http://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 	float lineVsPointCross = GLKVector2CrossProduct(
-		GLKVector2Subtract(info->pointForeStar, info->pointAftPort),
-		GLKVector2Subtract(surfaceST, info->pointAftPort)
+		GLKVector2Subtract(info.pointForeStar, info.pointAftPort),
+		GLKVector2Subtract(surfaceST, info.pointAftPort)
 	);
 	bool inAftStarTri = lineVsPointCross > 0.0f;
 	
@@ -192,14 +192,14 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo *inf
 	return surfaceSTToTexelUV_barycentricTri(
 		surfaceST,
 		(GLKVector2[3]){
-			info->points[triInQuadIndices[0]],
-			info->points[triInQuadIndices[1]],
-			info->points[triInQuadIndices[2]]
+			info.points[triInQuadIndices[0]],
+			info.points[triInQuadIndices[1]],
+			info.points[triInQuadIndices[2]]
 		},
 		(GLKVector2[3]){
-			info->pointUVs[triInQuadIndices[0]],
-			info->pointUVs[triInQuadIndices[1]],
-			info->pointUVs[triInQuadIndices[2]]
+			info.pointUVs[triInQuadIndices[0]],
+			info.pointUVs[triInQuadIndices[1]],
+			info.pointUVs[triInQuadIndices[2]]
 		}
 	);
 }
@@ -258,28 +258,28 @@ template<> inline void copyBytesToPixelFromTexel<4>(UInt8 *pixelBytes, const UIn
 }
 
 template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
-void genDestImagePixelBytes(const struct DestImageGenInfo *info, const int pixelX, const int pixelY, UInt8 *pixelByteBuffer)
+void genDestImagePixelBytes(const struct DestImageGenInfo &info, const int pixelX, const int pixelY, UInt8 *pixelByteBuffer)
 {
 	static const int kBytesPerPixel = tComponentCount;
 	
 	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
 		info,
 		GLKVector2Make(
-			(float)pixelX / info->destWidth,
-			(float)pixelY / info->destHeight
+			(float)pixelX / info.destWidth,
+			(float)pixelY / info.destHeight
 		)
 	);
 	
-	GLKVector2 texelXY = GLKVector2Multiply(texelUV, info->srcSize_v2);
+	GLKVector2 texelXY = GLKVector2Multiply(texelUV, info.srcSize_v2);
 	int nearestTexelX = (texelXY.x >= 0.0f) ? (int)texelXY.x : ((int)texelXY.x - 1),
 		nearestTexelY = (texelXY.y >= 0.0f) ? (int)texelXY.y : ((int)texelXY.y - 1);
 	
-	bool texelValid = normalizeTexelXY<tUVMode>(&nearestTexelX, &nearestTexelY, info->srcWidth_i, info->srcHeight_i);
+	bool texelValid = normalizeTexelXY<tUVMode>(&nearestTexelX, &nearestTexelY, info.srcWidth_i, info.srcHeight_i);
 	if (!texelValid)
 		return;
 	
-	const int texelIndex = nearestTexelY * info->srcWidth_i + nearestTexelX;
-	const UInt8 *texelBytes = &info->srcBytes[texelIndex * kBytesPerPixel];
+	const int texelIndex = nearestTexelY * info.srcWidth_i + nearestTexelX;
+	const UInt8 *texelBytes = &info.srcBytes[texelIndex * kBytesPerPixel];
 	
 	//UInt8 nearestTexelSample[kBytesPerPixel];
 	copyBytesToPixelFromTexel<tComponentCount>(pixelByteBuffer, texelBytes);
@@ -351,7 +351,7 @@ CFDataRef createDestImageData(
 			off_t position = pixelI * kBytesPerPixel;
 			UInt8 *pixelBytes = &byteBuffer[position];
 			
-			genDestImagePixelBytes<tUVMode, tComponentCount>(&info, pixelX, pixelY, pixelBytes);
+			genDestImagePixelBytes<tUVMode, tComponentCount>(info, pixelX, pixelY, pixelBytes);
 		}
 	}
 	
