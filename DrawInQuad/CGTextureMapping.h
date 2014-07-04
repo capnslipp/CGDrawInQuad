@@ -18,14 +18,24 @@ typedef enum OutsideOfQuadUVMode
 /// @return: A buffer in which to store the pixel data, of at least `(pixelCount * bytesPerPixel)` in size.
 typedef UInt8 * DestBufferAllocator(void *info, int pixelCount, size_t bytesPerPixel, bool *out_takeOwnership);
 
+static const GLKVector2 kDefaultPointUVs[4] = {
+	(GLKVector2){ 1.0f, 0.0f },
+	(GLKVector2){ 0.0f, 0.0f },
+	(GLKVector2){ 1.0f, 1.0f },
+	(GLKVector2){ 0.0f, 1.0f },
+};
+
 
 #ifdef __cplusplus
 	/// @arg points: Specified in standard OpenGL quad/quadstrip order: back-right, back-left, front-right, front-left
+	/// @arg pointUVs: The UV coordinates for each point.  If NULL, will use kDefaultPointUVs.
+	/// @arg destBufferAllocator: A DestBufferAllocator function to use for allocation of the memory that'll be returned, or NULL to use the default allocater.
+	/// @arg destBufferAllocatorInfo: A pointer to data of any type or NULL.  When the destBufferAllocator is called, it is sent this pointer.
 	template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
 	CFDataRef cgTextureMappingBlit(
 		int srcWidth, int srcHeight, CFDataRef srcData,
 		int destWidth, int destHeight,
-		GLKVector2 points[4],
+		const GLKVector2 points[4], const GLKVector2 pointUVs[4],
 		DestBufferAllocator destBufferAllocator=NULL, void *destBufferAllocatorInfo=NULL
 	);
 #endif
@@ -35,12 +45,10 @@ typedef UInt8 * DestBufferAllocator(void *info, int pixelCount, size_t bytesPerP
 	extern "C" {
 #endif
 
-/// @arg destBufferAllocator: A DestBufferAllocator function to use for allocation of the memory that'll be returned, or NULL to use the default allocater.
-/// @arg destBufferAllocatorInfo: A pointer to data of any type or NULL.  When the destBufferAllocator is called, it is sent this pointer.
 CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
-	GLKVector2 points[4],
+	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
 	OutsideOfQuadUVMode uvMode, int channelCount,
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 );

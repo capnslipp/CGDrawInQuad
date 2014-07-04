@@ -166,6 +166,7 @@ UInt8 * fetchDestImageBuffer_callback(void *info, int pixelCount, size_t bytesPe
 				GLKVector2FromCGPoint(self.point3),
 				GLKVector2FromCGPoint(self.point4),
 			},
+			NULL,
 			_outsideOfQuadUVMode,
 			4,
 			fetchDestImageBuffer_callback, (__bridge void *)self

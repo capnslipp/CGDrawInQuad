@@ -304,12 +304,14 @@ template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
 CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
-	GLKVector2 points[4],
+	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 )
 {
 	static const size_t kBytesPerPixel = tComponentCount;
 	
+	if (pointUVs == NULL)
+		pointUVs = kDefaultPointUVs;
 	if (destBufferAllocator == NULL)
 		destBufferAllocator = defaultDestBufferAllocator;
 	
@@ -326,10 +328,10 @@ CFDataRef cgTextureMappingBlit(
 		.pointAftPort = points[1],
 		.pointForeStar = points[2],
 		.pointForePort = points[3],
-		.pointUV0 = GLKVector2Make(1, 0),
-		.pointUV1 = GLKVector2Make(0, 0),
-		.pointUV2 = GLKVector2Make(1, 1),
-		.pointUV3 = GLKVector2Make(0, 1),
+		.pointUV0 = pointUVs[0],
+		.pointUV1 = pointUVs[1],
+		.pointUV2 = pointUVs[2],
+		.pointUV3 = pointUVs[3],
 	};
 	info.segmentAftDelta = GLKVector2Subtract(info.pointAftPort, info.pointAftStar);
 	info.segmentForeDelta = GLKVector2Subtract(info.pointForePort, info.pointForeStar);
@@ -364,7 +366,7 @@ template<OutsideOfQuadUVMode tUVMode>
 inline CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
-	GLKVector2 points[4],
+	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
 	int channelCount,
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 )
@@ -372,13 +374,13 @@ inline CFDataRef cgTextureMappingBlit(
 	switch (channelCount)
 	{
 		case 1:
-			return cgTextureMappingBlit<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 2:
-			return cgTextureMappingBlit<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 3:
-			return cgTextureMappingBlit<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 4:
-			return cgTextureMappingBlit<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(channelCount >= 1 && channelCount <= 4);
@@ -389,7 +391,7 @@ inline CFDataRef cgTextureMappingBlit(
 CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
-	GLKVector2 points[4],
+	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
 	OutsideOfQuadUVMode uvMode, int channelCount,
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 )
@@ -397,11 +399,11 @@ CFDataRef cgTextureMappingBlit(
 	switch (uvMode)
 	{
 		case OutsideOfQuadUVWrap:
-			return cgTextureMappingBlit<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVClamp:
-			return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVSkip:
-			return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(false); // not a valid uvMode
