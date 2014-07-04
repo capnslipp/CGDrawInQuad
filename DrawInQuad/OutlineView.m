@@ -46,17 +46,11 @@
 	_pointToScreenCoordTransform = newTransform;
 }
 
-- (void)setBounds:(CGRect)bounds
-{
-	[super setBounds:bounds];
-	
-	[self regenPointToScreenCoordTransform];
-}
-
 - (void)layoutSubviews
 {
 	[super layoutSubviews];
 	
+	[self regenPointToScreenCoordTransform];
 	[self setNeedsPathUpdate];
 }
 
