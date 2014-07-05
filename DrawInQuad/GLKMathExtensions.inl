@@ -4,6 +4,11 @@
 
 
 
+static inline bool GLKVector2IsInvalid(GLKVector2 vector)
+{
+	return isnan(vector.v[0]) || isnan(vector.v[1]);
+}
+
 static inline float GLKVector2LengthSqr(GLKVector2 vector)
 {
 	#if defined(__ARM_NEON__)

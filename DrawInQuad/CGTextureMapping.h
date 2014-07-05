@@ -5,12 +5,16 @@
 
 
 
-typedef enum OutsideOfQuadUVMode
-{
+typedef enum OutsideOfQuadUVMode {
 	OutsideOfQuadUVWrap,
 	OutsideOfQuadUVClamp,
 	OutsideOfQuadUVSkip,
 } OutsideOfQuadUVMode;
+
+typedef enum OutsideOfTextureSTMode {
+	OutsideOfTextureSTWrap,
+	OutsideOfTextureSTClamp,
+} OutsideOfTextureSTMode;
 
 
 /// In order to use the `out_takeOwnership` mechanism, the returned data must've been allocated with malloc(), realloc(), or calloc().
@@ -31,7 +35,7 @@ static const GLKVector2 kDefaultPointUVs[4] = {
 	/// @arg pointUVs: The UV coordinates for each point.  If NULL, will use kDefaultPointUVs.
 	/// @arg destBufferAllocator: A DestBufferAllocator function to use for allocation of the memory that'll be returned, or NULL to use the default allocater.
 	/// @arg destBufferAllocatorInfo: A pointer to data of any type or NULL.  When the destBufferAllocator is called, it is sent this pointer.
-	template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
+	template<OutsideOfQuadUVMode tUVMode, OutsideOfTextureSTMode tSTMode, int tComponentCount>
 	CFDataRef cgTextureMappingBlit(
 		int srcWidth, int srcHeight, CFDataRef srcData,
 		int destWidth, int destHeight,
@@ -49,7 +53,7 @@ CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
-	OutsideOfQuadUVMode uvMode, int channelCount,
+	OutsideOfQuadUVMode uvMode, OutsideOfTextureSTMode stMode, int channelCount,
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 );
 

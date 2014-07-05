@@ -4,6 +4,10 @@
 
 
 
+static const GLKVector2 GLKVector2Invalid = { .x = NAN, .y = NAN };
+
+static inline bool GLKVector2IsInvalid(GLKVector2 vector);
+
 /// Just GLKVector2Length() with the sqrt() operation removed.
 static inline float GLKVector2LengthSqr(GLKVector2 vector);
 

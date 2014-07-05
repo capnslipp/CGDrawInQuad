@@ -47,10 +47,10 @@ struct DestImageGenInfo {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 
-static inline int modulo(int dividendA, int divisorN)
+static inline int modulo_i(int dividendA, int divisorN)
 {
 	if (divisorN < 0) // you can check for divisorN == 0 separately and do what you want
-		return modulo(-dividendA, -divisorN);
+		return modulo_i(-dividendA, -divisorN);
 	
 	int ret = dividendA % divisorN;
 	if (ret < 0)
@@ -58,8 +58,19 @@ static inline int modulo(int dividendA, int divisorN)
 	
 	return ret;
 }
+static inline float modulo_f(float dividendA, float divisorN)
+{
+	if (divisorN < 0.0f) // you can check for divisorN == 0 separately and do what you want
+		return modulo_f(-dividendA, -divisorN);
+	
+	float ret = fmodf(dividendA, divisorN);
+	if (ret < 0)
+		ret += divisorN;
+	
+	return ret;
+}
 
-static inline int clampi(int v, int l, int h)
+static inline int clamp_i(int v, int l, int h)
 {
 	if (v < l)
 		return l;
@@ -68,10 +79,29 @@ static inline int clampi(int v, int l, int h)
 	else
 		return v;
 }
+static inline int clamp_f(int v, int l, int h)
+{
+	if (v < l)
+		return l;
+	else if (v > h)
+		return h;
+	else
+		return v;
+}
+static inline int clamp01_f(int v) {
+	return clamp_f(v, 0.0f, 1.0f);
+}
 
-static inline bool withini(int v, int l, int h)
+static inline bool within_i(int v, int l, int h)
 {
 	return v >= l && v <= h;
+}
+static inline bool within_f(float v, float l, float h)
+{
+	return v >= l && v <= h;
+}
+static inline bool within01_f(float v) {
+	return within_f(v, 0.0f, 1.0f);
 }
 
 static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr, GLKVector2 *out_nearestPoint)
@@ -135,9 +165,29 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 
 #pragma mark Texture Mapping Functions
 
+/// @return: Whether the texture coordinate could be and was normalized (`true`), or if it was too far out of range to be handled (`false`).
+template<OutsideOfQuadUVMode tUVMode> bool normalizeTexelCoord(float *coord);
+template<> inline bool normalizeTexelCoord<OutsideOfQuadUVWrap>(float *coord)
+{
+	if (!within01_f(*coord))
+		*coord = modulo_f(*coord, 1.0f);
+	return true;
+}
+template<> inline bool normalizeTexelCoord<OutsideOfQuadUVClamp>(float *coord)
+{
+	if (!within01_f(*coord))
+		*coord = clamp01_f(*coord);
+	return true;
+}
+template<> inline bool normalizeTexelCoord<OutsideOfQuadUVSkip>(float *coord)
+{
+	return within01_f(*coord);
+}
+
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
 /// 	Probably not the best algoritm for this— works, but with more distortion as the points become less square.
 /// 	Seems to show better results when the left and right sides of the points quad are parallel.
+template<OutsideOfQuadUVMode tUVMode>
 GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, const GLKVector2 surfaceST)
 {
 	GLKVector2 nearestPointOnAft, nearestPointOnFore;
@@ -154,10 +204,18 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, 
 		&nearestPointOnFore
 	);
 	
+	float ratioAlongNearestAftToNearestFore = ratioAlongSegment(surfaceST, nearestPointOnAft, nearestPointOnFore);
+	bool vCoordValid = normalizeTexelCoord<tUVMode>(&ratioAlongNearestAftToNearestFore);
+	if (!vCoordValid)
+		return GLKVector2Invalid;
+	
+	float lerpedAftForeRatios = ratioAlongAft + (ratioAlongFore - ratioAlongAft) * ratioAlongNearestAftToNearestFore;
+	bool uCoordValid = normalizeTexelCoord<tUVMode>(&lerpedAftForeRatios);
+	if (!uCoordValid)
+		return GLKVector2Invalid;
+	
 	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info.pointUV0, info.pointUV1, ratioAlongAft);
 	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info.pointUV2, info.pointUV3, ratioAlongFore);
-	float ratioAlongNearestAftToNearestFore = ratioAlongSegment(surfaceST, nearestPointOnAft, nearestPointOnFore);
-	
 	GLKVector2 texelUV = GLKVector2Lerp(uvOfNearestPointOnAft, uvOfNearestPointOnFore, ratioAlongNearestAftToNearestFore);
 	return texelUV;
 }
@@ -204,33 +262,20 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo &inf
 	);
 }
 
-template<OutsideOfQuadUVMode tUVMode> bool normalizeTexelXY(int *x, int *y, int srcWidth, int srcHeight);
-template<> inline bool normalizeTexelXY<OutsideOfQuadUVWrap>(int *x, int *y, int srcWidth, int srcHeight)
+template<OutsideOfTextureSTMode tUVMode> void normalizeTexelST(float st[2]);
+template<> inline void normalizeTexelST<OutsideOfTextureSTWrap>(float st[2])
 {
-	if (!withini(*x, 0, srcWidth - 1))
-		*x = modulo(*x, srcWidth);
-	if (!withini(*y, 0, srcHeight - 1))
-		*y = modulo(*y, srcHeight);
-	
-	return true;
+	if (!within01_f(st[0]))
+		st[0] = modulo_f(st[0], 1.0f);
+	if (!within01_f(st[1]))
+		st[1] = modulo_f(st[1], 1.0f);
 }
-template<> inline bool normalizeTexelXY<OutsideOfQuadUVClamp>(int *x, int *y, int srcWidth, int srcHeight)
+template<> inline void normalizeTexelST<OutsideOfTextureSTClamp>(float st[2])
 {
-	if (!withini(*x, 0, srcWidth - 1))
-		*x = clampi(*x, 0, srcWidth - 1);
-	if (!withini(*y, 0, srcHeight - 1))
-		*y = clampi(*y, 0, srcHeight - 1);
-	
-	return true;
-}
-template<> inline bool normalizeTexelXY<OutsideOfQuadUVSkip>(int *x, int *y, int srcWidth, int srcHeight)
-{
-	if (!withini(*x, 0, srcWidth - 1))
-		return false;
-	if (!withini(*y, 0, srcHeight - 1))
-		return false;
-	
-	return true;
+	if (!within01_f(st[0]))
+		st[0] = clamp01_f(st[0]);
+	if (!within01_f(st[1]))
+		st[1] = clamp01_f(st[1]);
 }
 
 template<int tComponentCount> void copyBytesToPixelFromTexel(UInt8 *texelBytes, const UInt8 *pixelBytes);
@@ -257,26 +302,26 @@ template<> inline void copyBytesToPixelFromTexel<4>(UInt8 *pixelBytes, const UIn
 	pixelBytes[3] = texelBytes[3];
 }
 
-template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
+template<OutsideOfQuadUVMode tUVMode, OutsideOfTextureSTMode tSTMode, int tComponentCount>
 void genDestImagePixelBytes(const struct DestImageGenInfo &info, const int pixelX, const int pixelY, UInt8 *pixelByteBuffer)
 {
 	static const int kBytesPerPixel = tComponentCount;
 	
-	const GLKVector2 texelUV = surfaceSTToTexelUV_bilinearQuad(
+	GLKVector2 texelST = surfaceSTToTexelUV_bilinearQuad<tUVMode>(
 		info,
 		GLKVector2Make(
 			(float)pixelX / info.destWidth,
 			(float)pixelY / info.destHeight
 		)
 	);
+	if (GLKVector2IsInvalid(texelST))
+		return;
 	
-	GLKVector2 texelXY = GLKVector2Multiply(texelUV, info.srcSize_v2);
+	normalizeTexelST<tSTMode>(texelST.v);
+	
+	GLKVector2 texelXY = GLKVector2Multiply(texelST, info.srcSize_v2);
 	int nearestTexelX = (texelXY.x >= 0.0f) ? (int)texelXY.x : ((int)texelXY.x - 1),
 		nearestTexelY = (texelXY.y >= 0.0f) ? (int)texelXY.y : ((int)texelXY.y - 1);
-	
-	bool texelValid = normalizeTexelXY<tUVMode>(&nearestTexelX, &nearestTexelY, info.srcWidth_i, info.srcHeight_i);
-	if (!texelValid)
-		return;
 	
 	const int texelIndex = nearestTexelY * info.srcWidth_i + nearestTexelX;
 	const UInt8 *texelBytes = &info.srcBytes[texelIndex * kBytesPerPixel];
@@ -300,7 +345,7 @@ UInt8 * defaultDestBufferAllocator(void *_, int pixelCount, size_t bytesPerPixel
 }
 
 /// Returned image data buffer must be freed with free() by the caller.
-template<OutsideOfQuadUVMode tUVMode, int tComponentCount>
+template<OutsideOfQuadUVMode tUVMode, OutsideOfTextureSTMode tSTMode, int tComponentCount>
 CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
@@ -353,7 +398,7 @@ CFDataRef cgTextureMappingBlit(
 			off_t position = pixelI * kBytesPerPixel;
 			UInt8 *pixelBytes = &byteBuffer[position];
 			
-			genDestImagePixelBytes<tUVMode, tComponentCount>(info, pixelX, pixelY, pixelBytes);
+			genDestImagePixelBytes<tUVMode, tSTMode, tComponentCount>(info, pixelX, pixelY, pixelBytes);
 		}
 	}
 	
@@ -362,7 +407,7 @@ CFDataRef cgTextureMappingBlit(
 	return data;
 }
 
-template<OutsideOfQuadUVMode tUVMode>
+template<OutsideOfQuadUVMode tUVMode, OutsideOfTextureSTMode tSTMode>
 inline CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
@@ -374,13 +419,13 @@ inline CFDataRef cgTextureMappingBlit(
 	switch (channelCount)
 	{
 		case 1:
-			return cgTextureMappingBlit<tUVMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, tSTMode, 1>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 2:
-			return cgTextureMappingBlit<tUVMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, tSTMode, 2>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 3:
-			return cgTextureMappingBlit<tUVMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, tSTMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 4:
-			return cgTextureMappingBlit<tUVMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<tUVMode, tSTMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(channelCount >= 1 && channelCount <= 4);
@@ -388,22 +433,41 @@ inline CFDataRef cgTextureMappingBlit(
 	}
 }
 
+template<OutsideOfQuadUVMode tUVMode>
+inline CFDataRef cgTextureMappingBlit(
+	int srcWidth, int srcHeight, CFDataRef srcData,
+	int destWidth, int destHeight,
+	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
+	OutsideOfTextureSTMode stMode, int channelCount,
+	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
+) {
+	switch (stMode) {
+		case OutsideOfTextureSTWrap:
+			return cgTextureMappingBlit<tUVMode, OutsideOfTextureSTWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+		case OutsideOfTextureSTClamp:
+			return cgTextureMappingBlit<tUVMode, OutsideOfTextureSTClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+		
+		default:
+			assert(false); // not a valid stMode
+			return NULL;
+	}
+}
 CFDataRef cgTextureMappingBlit(
 	int srcWidth, int srcHeight, CFDataRef srcData,
 	int destWidth, int destHeight,
 	const GLKVector2 points[4], const GLKVector2 pointUVs[4],
-	OutsideOfQuadUVMode uvMode, int channelCount,
+	OutsideOfQuadUVMode uvMode, OutsideOfTextureSTMode stMode, int channelCount,
 	DestBufferAllocator destBufferAllocator, void *destBufferAllocatorInfo
 )
 {
 	switch (uvMode)
 	{
 		case OutsideOfQuadUVWrap:
-			return cgTextureMappingBlit<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, stMode, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVClamp:
-			return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, stMode, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVSkip:
-			return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
+			return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, stMode, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		
 		default:
 			assert(false); // not a valid uvMode
