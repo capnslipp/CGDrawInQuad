@@ -4,13 +4,13 @@
 #include <assert.h>
 
 #include "GLKMathExtensions.h"
+#include "MathExtensions.h"
 
 
 
 #pragma mark Constants
 
 static const uint8_t kInvalidBoolValue = 0xff;
-static const float kJustUnder1_0f = nexttowardf(1.0f, 0.0);
 
 
 #pragma mark Intermediate Data
@@ -40,128 +40,6 @@ struct DestImageGenInfo {
 		struct { GLKVector2 pointUV0, pointUV1, pointUV2, pointUV3; };
 	};
 };
-
-
-
-#pragma mark Util Functions
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-
-static inline int modulo_i(int dividendA, int divisorN)
-{
-	if (divisorN < 0) // you can check for divisorN == 0 separately and do what you want
-		return modulo_i(-dividendA, -divisorN);
-	
-	int ret = dividendA % divisorN;
-	if (ret < 0)
-		ret += divisorN;
-	
-	return ret;
-}
-static inline float modulo_f(float dividendA, float divisorN)
-{
-	if (divisorN < 0.0f) // you can check for divisorN == 0 separately and do what you want
-		return modulo_f(-dividendA, -divisorN);
-	
-	float ret = fmodf(dividendA, divisorN);
-	if (ret < 0)
-		ret += divisorN;
-	
-	return ret;
-}
-
-static inline int clamp_i(int v, int l, int h)
-{
-	if (v < l)
-		return l;
-	else if (v > h)
-		return h;
-	else
-		return v;
-}
-static inline float clamp_f(float v, float l, float h)
-{
-	if (v < l)
-		return l;
-	else if (v > h)
-		return h;
-	else
-		return v;
-}
-static inline float clamp0ToJustUnder1_f(float v) {
-	return clamp_f(v, 0.0f, kJustUnder1_0f);
-}
-
-static inline bool within_i(int v, int l, int h)
-{
-	return v >= l && v <= h;
-}
-static inline bool inRangeInclusiveExclusive_f(float v, float lInclusive, float hExclusive)
-{
-	return v >= lInclusive && v < hExclusive;
-}
-static inline bool inRange0ToJustUnder1_f(float v) {
-	return inRangeInclusiveExclusive_f(v, 0.0f, 1.0f);
-}
-
-static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr, GLKVector2 *out_nearestPoint)
-{
-	GLKVector2 freeToADelta = GLKVector2Subtract(freePoint, segmentAPoint);
-	
-	float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / segmentLengthSqr;
-	
-	if (ratioAlongSegment <= 0.0f)
-		*out_nearestPoint = segmentAPoint;
-	else if (ratioAlongSegment >= 1.0f)
-		*out_nearestPoint = segmentBPoint;
-	else
-		*out_nearestPoint = GLKVector2Add(segmentAPoint, GLKVector2MultiplyScalar(segmentDelta, ratioAlongSegment));
-	
-	return ratioAlongSegment;
-}
-/// segmentDelta and segmentLengthSqr calculated on-the-fly
-static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 *out_nearestPoint) {
-	GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
-	float segmentLengthSqr = GLKVector2LengthSqr(segmentDelta);
-	return ratioAndNearestPointAlongSegment(freePoint, segmentAPoint, segmentBPoint, segmentDelta, segmentLengthSqr, out_nearestPoint);
-}
-
-static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr)
-{
-	GLKVector2 freeToADelta = GLKVector2Subtract(freePoint, segmentAPoint);
-	
-	float ratioAlongSegment = GLKVector2DotProduct(freeToADelta, segmentDelta) / segmentLengthSqr;
-	return ratioAlongSegment;
-}
-/// segmentDelta and segmentLengthSqr calculated on-the-fly
-static inline float ratioAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint) {
-	GLKVector2 segmentDelta = GLKVector2Subtract(segmentBPoint, segmentAPoint);
-	float segmentLengthSqr = GLKVector2LengthSqr(segmentDelta); // @warning: potentially zero, causings NaN to get returned
-	return ratioAlongSegment(freePoint, segmentAPoint, segmentBPoint, segmentDelta, segmentLengthSqr);
-}
-
-/// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
-static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVector2 tri[3])
-{
-	GLKVector2 v0 = GLKVector2Subtract(tri[1], tri[0]),
-		v1 = GLKVector2Subtract(tri[2], tri[0]),
-		v2 = GLKVector2Subtract(point, tri[0]);
-	
-	float d00 = GLKVector2DotProduct(v0, v0),
-		d01 = GLKVector2DotProduct(v0, v1),
-		d11 = GLKVector2DotProduct(v1, v1),
-		d20 = GLKVector2DotProduct(v2, v0),
-		d21 = GLKVector2DotProduct(v2, v1);
-	
-	float denomReciprocal = 1.0f / (d00 * d11 - d01 * d01);
-	float v = (d11 * d20 - d01 * d21) * denomReciprocal;
-	float w = (d00 * d21 - d01 * d20) * denomReciprocal;
-	
-	return GLKVector3Make(1.0f - v - w, v, w);
-}
-
-#pragma clang diagnostic pop // ignored "-Wunused-function"
 
 
 #pragma mark Texture Mapping Functions
@@ -243,6 +121,26 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, 
 	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info.pointUV2, info.pointUV3, lerpedAftForeRatios);
 	GLKVector2 texelUV = GLKVector2Lerp(uvOfNearestPointOnAft, uvOfNearestPointOnFore, ratioAlongNearestAftToNearestFore);
 	return texelUV;
+}
+
+/// @source: Real-Time Collision Detection by Christer Ericson (Morgan Kaufmann, 2005) - Chapter 3: A Math and Geometry Primer - Section 3.4 Barycentric Coordinates
+static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVector2 tri[3])
+{
+	GLKVector2 v0 = GLKVector2Subtract(tri[1], tri[0]),
+		v1 = GLKVector2Subtract(tri[2], tri[0]),
+		v2 = GLKVector2Subtract(point, tri[0]);
+	
+	float d00 = GLKVector2DotProduct(v0, v0),
+		d01 = GLKVector2DotProduct(v0, v1),
+		d11 = GLKVector2DotProduct(v1, v1),
+		d20 = GLKVector2DotProduct(v2, v0),
+		d21 = GLKVector2DotProduct(v2, v1);
+	
+	float denomReciprocal = 1.0f / (d00 * d11 - d01 * d01);
+	float v = (d11 * d20 - d01 * d21) * denomReciprocal;
+	float w = (d00 * d21 - d01 * d20) * denomReciprocal;
+	
+	return GLKVector3Make(1.0f - v - w, v, w);
 }
 
 GLKVector2 surfaceSTToTexelUV_barycentricTri(const GLKVector2 surfaceST, const GLKVector2 pointSTs[3], const GLKVector2 pointUVs[3])

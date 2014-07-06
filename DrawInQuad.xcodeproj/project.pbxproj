@@ -52,7 +52,9 @@
 		D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CGTextureMapping.cpp; sourceTree = "<group>"; };
 		D4341D57195F5EC10069C78D /* CGTextureMapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGTextureMapping.h; sourceTree = "<group>"; };
 		D4341D58195F60110069C78D /* GLKMathExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLKMathExtensions.h; sourceTree = "<group>"; };
-		D4341D59195F601B0069C78D /* GLKMathExtensions.inl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c; fileEncoding = 4; path = GLKMathExtensions.inl; sourceTree = "<group>"; };
+		D4341D59195F601B0069C78D /* GLKMathExtensions.inl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = GLKMathExtensions.inl; sourceTree = "<group>"; };
+		D44314CD196B43A800C3DFF7 /* MathExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MathExtensions.h; sourceTree = "<group>"; };
+		D44314CE196B43B500C3DFF7 /* MathExtensions.inl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = MathExtensions.inl; sourceTree = "<group>"; };
 		D477AA5B19563FF0008F8965 /* src.eyes.s512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.eyes.s512.png; sourceTree = "<group>"; };
 		D477AA5C19563FF0008F8965 /* src.fc3.s128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.fc3.s128.png; sourceTree = "<group>"; };
 		D477AA5D19563FF0008F8965 /* src.red.s128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.red.s128.png; sourceTree = "<group>"; };
@@ -122,6 +124,8 @@
 				CA50EFE819515BE80002B467 /* ViewController.m */,
 				D4341D57195F5EC10069C78D /* CGTextureMapping.h */,
 				D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */,
+				D44314CD196B43A800C3DFF7 /* MathExtensions.h */,
+				D44314CE196B43B500C3DFF7 /* MathExtensions.inl */,
 				D4341D58195F60110069C78D /* GLKMathExtensions.h */,
 				D4341D59195F601B0069C78D /* GLKMathExtensions.inl */,
 				CA50EFEA19515BE80002B467 /* Images.xcassets */,
