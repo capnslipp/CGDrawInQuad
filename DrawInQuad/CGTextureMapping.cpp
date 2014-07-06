@@ -23,7 +23,7 @@ struct DestImageGenInfo {
 	GLKVector2 srcSize_v2;
 	const UInt8 * srcBytes;
 	
-	int destWidth, destHeight;
+	GLKVector2 destSizeReciprocal_v2;
 	
 	union {
 		GLKVector2 points[4];
@@ -313,13 +313,8 @@ void genDestImagePixelBytes(const struct DestImageGenInfo &info, const int pixel
 {
 	static const int kBytesPerPixel = tComponentCount;
 	
-	GLKVector2 texelST = surfaceSTToTexelUV_bilinearQuad<tUVMode>(
-		info,
-		GLKVector2Make(
-			(float)pixelX / info.destWidth,
-			(float)pixelY / info.destHeight
-		)
-	);
+	const GLKVector2 &pixelST = GLKVector2Multiply(GLKVector2Make(pixelX, pixelY), info.destSizeReciprocal_v2);
+	GLKVector2 texelST = surfaceSTToTexelUV_bilinearQuad<tUVMode>(info, pixelST);
 	if (GLKVector2IsInvalid(texelST))
 		return;
 	
@@ -374,7 +369,6 @@ CFDataRef cgTextureMappingBlit(
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
 		.srcSize_v2 = GLKVector2Make(srcWidth, srcHeight),
 		.srcBytes = srcBytes,
-		.destWidth = destWidth, .destHeight = destHeight,
 		.pointAftStar = points[0],
 		.pointAftPort = points[1],
 		.pointForeStar = points[2],
@@ -383,6 +377,7 @@ CFDataRef cgTextureMappingBlit(
 		.pointUV1 = pointUVs[1],
 		.pointUV2 = pointUVs[2],
 		.pointUV3 = pointUVs[3],
+		.destSizeReciprocal_v2 = GLKVector2Make(1.0f / destWidth, 1.0f / destHeight),
 	};
 	info.segmentAftDelta = GLKVector2Subtract(info.pointAftPort, info.pointAftStar);
 	info.segmentForeDelta = GLKVector2Subtract(info.pointForePort, info.pointForeStar);
