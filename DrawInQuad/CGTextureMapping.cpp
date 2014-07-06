@@ -165,6 +165,15 @@ static inline GLKVector3 barycentricCoords2(const GLKVector2 point, const GLKVec
 
 #pragma mark Texture Mapping Functions
 
+/// @return: Whether the texture coordinate could potentially be normalized (`true`), or if it was too far out of range to be handled (`false`).
+template<OutsideOfQuadUVMode tUVMode> bool isTexelCoordNormalizable(const float &coord);
+template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVWrap>(const float &coord) { return true; }
+template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVClamp>(const float &coord) { return true; }
+template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVSkip>(const float &coord)
+{
+	return within01_f(coord);
+}
+
 /// @return: Whether the texture coordinate could be and was normalized (`true`), or if it was too far out of range to be handled (`false`).
 template<OutsideOfQuadUVMode tUVMode> bool normalizeTexelCoord(float *coord);
 template<> inline bool normalizeTexelCoord<OutsideOfQuadUVWrap>(float *coord)
@@ -210,7 +219,7 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, 
 		return GLKVector2Invalid;
 	
 	float lerpedAftForeRatios = ratioAlongAft + (ratioAlongFore - ratioAlongAft) * ratioAlongNearestAftToNearestFore;
-	bool uCoordValid = normalizeTexelCoord<tUVMode>(&lerpedAftForeRatios);
+	bool uCoordValid = isTexelCoordNormalizable<tUVMode>(lerpedAftForeRatios);
 	if (!uCoordValid)
 		return GLKVector2Invalid;
 	
