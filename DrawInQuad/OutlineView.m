@@ -110,7 +110,7 @@
 - (NSArray *)points
 {
 	NSMutableArray *pointValueArray = [NSMutableArray arrayWithCapacity:_pointCount];
-	for (int pointI = 0; pointI < _pointCount; ++pointI)
+	for (NSUInteger pointI = 0; pointI < _pointCount; ++pointI)
 		pointValueArray[pointI] = [NSValue valueWithCGPoint:_points[pointI]];
 	
 	return pointValueArray;

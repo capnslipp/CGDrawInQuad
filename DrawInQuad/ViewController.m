@@ -167,16 +167,16 @@ UInt8 * fetchDestImageBuffer_callback(void *info, int pixelCount, size_t bytesPe
 				GLKVector2FromCGPoint(self.point4),
 			},
 			(GLKVector2[4]){
-				(GLKVector2){ 1.0f, 0.0f },
-				(GLKVector2){ 0.0f, 0.0f },
-				(GLKVector2){ 1.0f, 1.0f },
-				(GLKVector2){ 0.0f, 1.0f },
+				(GLKVector2){ .x = 3.0f, .y = 0.0f },
+				(GLKVector2){ .x = 0.0f, .y = 0.0f },
+				(GLKVector2){ .x = 3.0f, .y = 2.0f },
+				(GLKVector2){ .x = 0.0f, .y = 2.0f },
 			},
 			_outsideOfQuadUVMode, OutsideOfTextureSTWrap,
 			4,
 			fetchDestImageBuffer_callback, (__bridge void *)self
 		);
-		NSAssert(CFDataGetLength(imageData) == _destByteCount,
+		NSAssert((size_t)CFDataGetLength(imageData) == _destByteCount,
 			@"Number of bytes generated (%zu) does not match calculated total byte count (%zu).",
 			CFDataGetLength(imageData), _destByteCount
 		);

@@ -23,10 +23,10 @@ typedef enum OutsideOfTextureSTMode {
 typedef UInt8 * DestBufferAllocator(void *info, int pixelCount, size_t bytesPerPixel, bool *out_takeOwnership);
 
 static const GLKVector2 kDefaultPointUVs[4] = {
-	(GLKVector2){ 1.0f, 0.0f },
-	(GLKVector2){ 0.0f, 0.0f },
-	(GLKVector2){ 1.0f, 1.0f },
-	(GLKVector2){ 0.0f, 1.0f },
+	(GLKVector2){ .x = 1.0f, .y = 0.0f },
+	(GLKVector2){ .x = 0.0f, .y = 0.0f },
+	(GLKVector2){ .x = 1.0f, .y = 1.0f },
+	(GLKVector2){ .x = 0.0f, .y = 1.0f },
 };
 
 
