@@ -52,7 +52,7 @@
 		D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CGTextureMapping.cpp; sourceTree = "<group>"; };
 		D4341D57195F5EC10069C78D /* CGTextureMapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGTextureMapping.h; sourceTree = "<group>"; };
 		D4341D58195F60110069C78D /* GLKMathExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLKMathExtensions.h; sourceTree = "<group>"; };
-		D4341D59195F601B0069C78D /* GLKMathExtensions.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GLKMathExtensions.inl; sourceTree = "<group>"; };
+		D4341D59195F601B0069C78D /* GLKMathExtensions.inl */ = {isa = PBXFileReference; explicitFileType = sourcecode.c; fileEncoding = 4; path = GLKMathExtensions.inl; sourceTree = "<group>"; };
 		D477AA5B19563FF0008F8965 /* src.eyes.s512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.eyes.s512.png; sourceTree = "<group>"; };
 		D477AA5C19563FF0008F8965 /* src.fc3.s128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.fc3.s128.png; sourceTree = "<group>"; };
 		D477AA5D19563FF0008F8965 /* src.red.s128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = src.red.s128.png; sourceTree = "<group>"; };
