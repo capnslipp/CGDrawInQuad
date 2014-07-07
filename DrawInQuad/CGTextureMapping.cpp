@@ -331,9 +331,9 @@ void genDestImagePixelBytes(const struct DestImageGenInfo &info, const int pixel
 	copyBytesToPixelFromTexel<tComponentCount>(pixelByteBuffer, texelBytes);
 	
 	// @debug: show UVs directly
-	//pixelByteBuffer[0] = fabsf(texelUV.x) * 255.0f;
-	//pixelByteBuffer[1] = fabsf(texelUV.y) * 255.0f;
-	//pixelByteBuffer[2] = (texelUV.x < 0 ? 127 : 0) + (texelUV.y < 0 ? 127 : 0);
+	//pixelByteBuffer[0] = fabsf(texelST.x) * 255.0f;
+	//pixelByteBuffer[1] = fabsf(texelST.y) * 255.0f;
+	//pixelByteBuffer[2] = (texelST.x < 0 ? 127 : 0) + (texelST.y < 0 ? 127 : 0);
 	//pixelByteBuffer[3] = 255;
 }
 
