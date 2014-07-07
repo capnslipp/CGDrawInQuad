@@ -26,8 +26,25 @@
 		D477AA6619563FF0008F8965 /* src.rg-points.s5.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5F19563FF0008F8965 /* src.rg-points.s5.png */; };
 		D477AA6719563FF0008F8965 /* src.rg-ramps.s2.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA6019563FF0008F8965 /* src.rg-ramps.s2.png */; };
 		D477AA6819563FF0008F8965 /* src.rg-ramps.s3.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA6119563FF0008F8965 /* src.rg-ramps.s3.png */; };
+		D4A46A27196B4F0700051A66 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D4A469FE196B4E5700051A66 /* CoreFoundation.framework */; };
+		D4A46A28196B4F0900051A66 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D4DAD20419555E48000B6F63 /* GLKit.framework */; };
+		D4A46A29196B4F0C00051A66 /* CGTextureMapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */; };
+		D4A46A50196B4FBF00051A66 /* CGTextureMapping.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = D4341D57195F5EC10069C78D /* CGTextureMapping.h */; };
 		D4DAD20519555E48000B6F63 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D4DAD20419555E48000B6F63 /* GLKit.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D4A46A03196B4EE700051A66 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+				D4A46A50196B4FBF00051A66 /* CGTextureMapping.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		5F4D4E35C4104019A703C2DB /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -39,7 +56,7 @@
 		CA50EFD719515BE80002B467 /* DrawInQuad-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "DrawInQuad-Info.plist"; sourceTree = "<group>"; };
 		CA50EFD919515BE80002B467 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		CA50EFDB19515BE80002B467 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		CA50EFDD19515BE80002B467 /* DrawInQuad-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "DrawInQuad-Prefix.pch"; sourceTree = "<group>"; };
+		CA50EFDD19515BE80002B467 /* Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
 		CA50EFDE19515BE80002B467 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CA50EFDF19515BE80002B467 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		CA50EFE519515BE80002B467 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -62,6 +79,8 @@
 		D477AA5F19563FF0008F8965 /* src.rg-points.s5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "src.rg-points.s5.png"; sourceTree = "<group>"; };
 		D477AA6019563FF0008F8965 /* src.rg-ramps.s2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "src.rg-ramps.s2.png"; sourceTree = "<group>"; };
 		D477AA6119563FF0008F8965 /* src.rg-ramps.s3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "src.rg-ramps.s3.png"; sourceTree = "<group>"; };
+		D4A469FE196B4E5700051A66 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		D4A46A05196B4EE700051A66 /* libCGTextureMapping.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCGTextureMapping.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4DAD20419555E48000B6F63 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -75,6 +94,15 @@
 				CA50EFD019515BE80002B467 /* Foundation.framework in Frameworks */,
 				D4DAD20519555E48000B6F63 /* GLKit.framework in Frameworks */,
 				CA50EFD419515BE80002B467 /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D4A46A02196B4EE700051A66 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4A46A27196B4F0700051A66 /* CoreFoundation.framework in Frameworks */,
+				D4A46A28196B4F0900051A66 /* GLKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				CA50EFCC19515BE80002B467 /* DrawInQuad.app */,
+				D4A46A05196B4EE700051A66 /* libCGTextureMapping.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -103,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				5F4D4E35C4104019A703C2DB /* libPods.a */,
+				D4A469FE196B4E5700051A66 /* CoreFoundation.framework */,
 				CA50EFD119515BE80002B467 /* CoreGraphics.framework */,
 				CA50EFCF19515BE80002B467 /* Foundation.framework */,
 				D4DAD20419555E48000B6F63 /* GLKit.framework */,
@@ -139,7 +169,7 @@
 			isa = PBXGroup;
 			children = (
 				CA50EFD719515BE80002B467 /* DrawInQuad-Info.plist */,
-				CA50EFDD19515BE80002B467 /* DrawInQuad-Prefix.pch */,
+				CA50EFDD19515BE80002B467 /* Prefix.pch */,
 				CA50EFD819515BE80002B467 /* InfoPlist.strings */,
 				CA50EFDB19515BE80002B467 /* main.m */,
 			);
@@ -182,6 +212,23 @@
 			productReference = CA50EFCC19515BE80002B467 /* DrawInQuad.app */;
 			productType = "com.apple.product-type.application";
 		};
+		D4A46A04196B4EE700051A66 /* CGTextureMapping */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D4A46A21196B4EE800051A66 /* Build configuration list for PBXNativeTarget "CGTextureMapping" */;
+			buildPhases = (
+				D4A46A01196B4EE700051A66 /* Sources */,
+				D4A46A02196B4EE700051A66 /* Frameworks */,
+				D4A46A03196B4EE700051A66 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CGTextureMapping;
+			productName = CGTextureMapping;
+			productReference = D4A46A05196B4EE700051A66 /* libCGTextureMapping.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -204,6 +251,7 @@
 			projectRoot = "";
 			targets = (
 				CA50EFCB19515BE80002B467 /* DrawInQuad */,
+				D4A46A04196B4EE700051A66 /* CGTextureMapping */,
 			);
 		};
 /* End PBXProject section */
@@ -271,6 +319,14 @@
 				CA50EFE019515BE80002B467 /* AppDelegate.m in Sources */,
 				CA50EFDC19515BE80002B467 /* main.m in Sources */,
 				CAC663371952509A00930261 /* OutlineView.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D4A46A01196B4EE700051A66 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4A46A29196B4F0C00051A66 /* CGTextureMapping.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -388,7 +444,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "DrawInQuad/DrawInQuad-Prefix.pch";
+				GCC_PREFIX_HEADER = DrawInQuad/Prefix.pch;
 				INFOPLIST_FILE = "DrawInQuad/DrawInQuad-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
@@ -402,10 +458,44 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "DrawInQuad/DrawInQuad-Prefix.pch";
+				GCC_PREFIX_HEADER = DrawInQuad/Prefix.pch;
 				INFOPLIST_FILE = "DrawInQuad/DrawInQuad-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		D4A46A22196B4EE800051A66 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DSTROOT = /tmp/CGTextureMapping.dst;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = DrawInQuad/Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		D4A46A23196B4EE800051A66 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DSTROOT = /tmp/CGTextureMapping.dst;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = DrawInQuad/Prefix.pch;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -426,6 +516,15 @@
 			buildConfigurations = (
 				CA50F00219515BE90002B467 /* Debug */,
 				CA50F00319515BE90002B467 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D4A46A21196B4EE800051A66 /* Build configuration list for PBXNativeTarget "CGTextureMapping" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D4A46A22196B4EE800051A66 /* Debug */,
+				D4A46A23196B4EE800051A66 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
