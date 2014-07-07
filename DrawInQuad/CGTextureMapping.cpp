@@ -237,8 +237,10 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, 
 	if (!uCoordValid)
 		return GLKVector2Invalid;
 	
-	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info.pointUV0, info.pointUV1, ratioAlongAft);
-	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info.pointUV2, info.pointUV3, ratioAlongFore);
+	normalizeTexelCoord<tUVMode>(lerpedAftForeRatios);
+	
+	GLKVector2 uvOfNearestPointOnAft = GLKVector2Lerp(info.pointUV0, info.pointUV1, lerpedAftForeRatios);
+	GLKVector2 uvOfNearestPointOnFore = GLKVector2Lerp(info.pointUV2, info.pointUV3, lerpedAftForeRatios);
 	GLKVector2 texelUV = GLKVector2Lerp(uvOfNearestPointOnAft, uvOfNearestPointOnFore, ratioAlongNearestAftToNearestFore);
 	return texelUV;
 }
