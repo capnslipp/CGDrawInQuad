@@ -16,7 +16,7 @@
 
 **iOS test app for CPU-side CoreGraphics UV texture mapping into a quad.**
 
-![Screenshot](./README.screenshot.ipad-vertical.png)
+![Screenshot](./README.screenshot.ipad-horizontal.png)
 
 
 ## Why?
