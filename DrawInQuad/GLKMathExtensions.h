@@ -28,6 +28,9 @@ static inline GLKVector2 GLKVector2Avg4(GLKVector2 vectorA, GLKVector2 vectorB, 
 /// Angle in radians; X+ is 0° increasing counter-clockwise until 180° (PI), then -180° back to 0°.
 static inline float GLKVector2Angle(GLKVector2 vector);
 
+/// Lerp with independent `t`s for each axis.
+static inline GLKVector2 GLKVector2Lerp2(GLKVector2 vectorStart, GLKVector2 vectorEnd, GLKVector2 vectorT);
+
 /// Slerp (angle and magnitude-lerp) for GLKVector2
 static inline GLKVector2 GLKVector2Slerp(GLKVector2 vectorStart, GLKVector2 vectorEnd, float t);
 

@@ -69,6 +69,13 @@ static inline float GLKVector2Angle(GLKVector2 vector)
  	return atan2f(vector.y, vector.x);
 }
 
+static inline GLKVector2 GLKVector2Lerp2(GLKVector2 vectorStart, GLKVector2 vectorEnd, GLKVector2 vectorT)
+{
+	GLKVector2 delta = GLKVector2Subtract(vectorEnd, vectorStart);
+	GLKVector2 lerp = GLKVector2Add(vectorStart, GLKVector2Multiply(delta, vectorT));
+	return lerp;
+}
+
 static inline GLKVector2 GLKVector2Slerp(GLKVector2 vectorStart, GLKVector2 vectorEnd, float t)
 {
 	if (t <= 0.0f)
