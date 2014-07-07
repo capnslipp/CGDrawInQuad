@@ -175,22 +175,33 @@ template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVSkip>(const float
 }
 
 /// @return: Whether the texture coordinate could be and was normalized (`true`), or if it was too far out of range to be handled (`false`).
-template<OutsideOfQuadUVMode tUVMode> bool normalizeTexelCoord(float *coord);
-template<> inline bool normalizeTexelCoord<OutsideOfQuadUVWrap>(float *coord)
+template<OutsideOfQuadUVMode tUVMode> void normalizeTexelCoord(float &coord);
+template<> inline void normalizeTexelCoord<OutsideOfQuadUVWrap>(float &coord)
 {
-	if (!within01_f(*coord))
-		*coord = modulo_f(*coord, 1.0f);
-	return true;
+	if (!within01_f(coord))
+		coord = modulo_f(coord, 1.0f);
 }
-template<> inline bool normalizeTexelCoord<OutsideOfQuadUVClamp>(float *coord)
+template<> inline void normalizeTexelCoord<OutsideOfQuadUVClamp>(float &coord)
 {
-	if (!within01_f(*coord))
-		*coord = clamp01_f(*coord);
-	return true;
+	if (!within01_f(coord))
+		coord = clamp01_f(coord);
 }
-template<> inline bool normalizeTexelCoord<OutsideOfQuadUVSkip>(float *coord)
+template<> inline void normalizeTexelCoord<OutsideOfQuadUVSkip>(float &coord) { /* no-op */ }
+
+template<OutsideOfTextureSTMode tUVMode> void normalizeTexelST(float st[2]);
+template<> inline void normalizeTexelST<OutsideOfTextureSTWrap>(float st[2])
 {
-	return within01_f(*coord);
+	if (!within01_f(st[0]))
+		st[0] = modulo_f(st[0], 1.0f);
+	if (!within01_f(st[1]))
+		st[1] = modulo_f(st[1], 1.0f);
+}
+template<> inline void normalizeTexelST<OutsideOfTextureSTClamp>(float st[2])
+{
+	if (!within01_f(st[0]))
+		st[0] = clamp01_f(st[0]);
+	if (!within01_f(st[1]))
+		st[1] = clamp01_f(st[1]);
 }
 
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
@@ -214,9 +225,11 @@ GLKVector2 surfaceSTToTexelUV_bilinearQuad(const struct DestImageGenInfo &info, 
 	);
 	
 	float ratioAlongNearestAftToNearestFore = ratioAlongSegment(surfaceST, nearestPointOnAft, nearestPointOnFore);
-	bool vCoordValid = normalizeTexelCoord<tUVMode>(&ratioAlongNearestAftToNearestFore);
+	bool vCoordValid = isTexelCoordNormalizable<tUVMode>(ratioAlongNearestAftToNearestFore);
 	if (!vCoordValid)
 		return GLKVector2Invalid;
+	
+	normalizeTexelCoord<tUVMode>(ratioAlongNearestAftToNearestFore);
 	
 	float lerpedAftForeRatios = ratioAlongAft + (ratioAlongFore - ratioAlongAft) * ratioAlongNearestAftToNearestFore;
 	bool uCoordValid = isTexelCoordNormalizable<tUVMode>(lerpedAftForeRatios);
@@ -269,22 +282,6 @@ GLKVector2 surfaceSTToTexelUV_barycentricQuad(const struct DestImageGenInfo &inf
 			info.pointUVs[triInQuadIndices[2]]
 		}
 	);
-}
-
-template<OutsideOfTextureSTMode tUVMode> void normalizeTexelST(float st[2]);
-template<> inline void normalizeTexelST<OutsideOfTextureSTWrap>(float st[2])
-{
-	if (!within01_f(st[0]))
-		st[0] = modulo_f(st[0], 1.0f);
-	if (!within01_f(st[1]))
-		st[1] = modulo_f(st[1], 1.0f);
-}
-template<> inline void normalizeTexelST<OutsideOfTextureSTClamp>(float st[2])
-{
-	if (!within01_f(st[0]))
-		st[0] = clamp01_f(st[0]);
-	if (!within01_f(st[1]))
-		st[1] = clamp01_f(st[1]);
 }
 
 template<int tComponentCount> void copyBytesToPixelFromTexel(UInt8 *texelBytes, const UInt8 *pixelBytes);
