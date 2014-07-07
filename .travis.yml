@@ -5,4 +5,6 @@ before_install:
     - gem install cocoapods
 language: objective-c
 xcode_workspace: DrawInQuad.xcworkspace
-xcode_scheme: DrawInQuad
+xcode_scheme:
+    - DrawInQuad
+    - CGTextureMapping
