@@ -10,6 +10,7 @@
 #pragma mark Constants
 
 static const uint8_t kInvalidBoolValue = 0xff;
+static const float kJustUnder1_0f = nexttowardf(1.0f, 0.0);
 
 
 #pragma mark Intermediate Data
@@ -88,20 +89,20 @@ static inline float clamp_f(float v, float l, float h)
 	else
 		return v;
 }
-static inline float clamp01_f(float v) {
-	return clamp_f(v, 0.0f, 1.0f);
+static inline float clamp0ToJustUnder1_f(float v) {
+	return clamp_f(v, 0.0f, kJustUnder1_0f);
 }
 
 static inline bool within_i(int v, int l, int h)
 {
 	return v >= l && v <= h;
 }
-static inline bool within_f(float v, float l, float h)
+static inline bool inRangeInclusiveExclusive_f(float v, float lInclusive, float hExclusive)
 {
-	return v >= l && v <= h;
+	return v >= lInclusive && v < hExclusive;
 }
-static inline bool within01_f(float v) {
-	return within_f(v, 0.0f, 1.0f);
+static inline bool inRange0ToJustUnder1_f(float v) {
+	return inRangeInclusiveExclusive_f(v, 0.0f, 1.0f);
 }
 
 static inline float ratioAndNearestPointAlongSegment(GLKVector2 freePoint, GLKVector2 segmentAPoint, GLKVector2 segmentBPoint, GLKVector2 segmentDelta, float segmentLengthSqr, GLKVector2 *out_nearestPoint)
@@ -171,37 +172,37 @@ template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVWrap>(const float
 template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVClamp>(const float &coord) { return true; }
 template<> inline bool isTexelCoordNormalizable<OutsideOfQuadUVSkip>(const float &coord)
 {
-	return within01_f(coord);
+	return inRange0ToJustUnder1_f(coord);
 }
 
 /// @return: Whether the texture coordinate could be and was normalized (`true`), or if it was too far out of range to be handled (`false`).
 template<OutsideOfQuadUVMode tUVMode> void normalizeTexelCoord(float &coord);
 template<> inline void normalizeTexelCoord<OutsideOfQuadUVWrap>(float &coord)
 {
-	if (!within01_f(coord))
+	if (!inRange0ToJustUnder1_f(coord))
 		coord = modulo_f(coord, 1.0f);
 }
 template<> inline void normalizeTexelCoord<OutsideOfQuadUVClamp>(float &coord)
 {
-	if (!within01_f(coord))
-		coord = clamp01_f(coord);
+	if (!inRange0ToJustUnder1_f(coord))
+		coord = clamp0ToJustUnder1_f(coord);
 }
 template<> inline void normalizeTexelCoord<OutsideOfQuadUVSkip>(float &coord) { /* no-op */ }
 
 template<OutsideOfTextureSTMode tUVMode> void normalizeTexelST(float st[2]);
 template<> inline void normalizeTexelST<OutsideOfTextureSTWrap>(float st[2])
 {
-	if (!within01_f(st[0]))
+	if (!inRange0ToJustUnder1_f(st[0]))
 		st[0] = modulo_f(st[0], 1.0f);
-	if (!within01_f(st[1]))
+	if (!inRange0ToJustUnder1_f(st[1]))
 		st[1] = modulo_f(st[1], 1.0f);
 }
 template<> inline void normalizeTexelST<OutsideOfTextureSTClamp>(float st[2])
 {
-	if (!within01_f(st[0]))
-		st[0] = clamp01_f(st[0]);
-	if (!within01_f(st[1]))
-		st[1] = clamp01_f(st[1]);
+	if (!inRange0ToJustUnder1_f(st[0]))
+		st[0] = clamp0ToJustUnder1_f(st[0]);
+	if (!inRange0ToJustUnder1_f(st[1]))
+		st[1] = clamp0ToJustUnder1_f(st[1]);
 }
 
 /// Based on a loose understanding of Wikipedia's article on Bilinear interpolation (https://en.wikipedia.org/wiki/Bilinear_interpolation).
