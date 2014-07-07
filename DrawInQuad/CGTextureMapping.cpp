@@ -79,7 +79,7 @@ static inline int clamp_i(int v, int l, int h)
 	else
 		return v;
 }
-static inline int clamp_f(int v, int l, int h)
+static inline float clamp_f(float v, float l, float h)
 {
 	if (v < l)
 		return l;
@@ -88,7 +88,7 @@ static inline int clamp_f(int v, int l, int h)
 	else
 		return v;
 }
-static inline int clamp01_f(int v) {
+static inline float clamp01_f(float v) {
 	return clamp_f(v, 0.0f, 1.0f);
 }
 
