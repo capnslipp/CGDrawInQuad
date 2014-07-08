@@ -266,6 +266,7 @@ CFDataRef cgTextureMappingBlit(
 	assert(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel));
 	
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
+	assert(srcBytes != NULL);
 	struct DestImageGenInfo info = {
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
 		.srcSize_v2 = GLKVector2Make(srcWidth, srcHeight),
