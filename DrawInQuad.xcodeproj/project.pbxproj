@@ -19,6 +19,10 @@
 		CA50EFEB19515BE80002B467 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA50EFEA19515BE80002B467 /* Images.xcassets */; };
 		CAC663371952509A00930261 /* OutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = CAC663361952509A00930261 /* OutlineView.m */; };
 		D4341D56195F5E2D0069C78D /* CGTextureMapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D4341D55195F5E2D0069C78D /* CGTextureMapping.cpp */; };
+		D45F86CB19707A79002C8781 /* MathExtensions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = D44314CD196B43A800C3DFF7 /* MathExtensions.h */; };
+		D45F86CC19707A81002C8781 /* GLKMathExtensions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = D4341D58195F60110069C78D /* GLKMathExtensions.h */; };
+		D45F86CD19707E45002C8781 /* MathExtensions.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = D44314CE196B43B500C3DFF7 /* MathExtensions.inl */; };
+		D45F86CE19707E47002C8781 /* GLKMathExtensions.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = D4341D59195F601B0069C78D /* GLKMathExtensions.inl */; };
 		D477AA6219563FF0008F8965 /* src.eyes.s512.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5B19563FF0008F8965 /* src.eyes.s512.png */; };
 		D477AA6319563FF0008F8965 /* src.fc3.s128.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5C19563FF0008F8965 /* src.fc3.s128.png */; };
 		D477AA6419563FF0008F8965 /* src.red.s128.png in Resources */ = {isa = PBXBuildFile; fileRef = D477AA5D19563FF0008F8965 /* src.red.s128.png */; };
@@ -41,6 +45,10 @@
 			dstSubfolderSpec = 16;
 			files = (
 				D4A46A50196B4FBF00051A66 /* CGTextureMapping.h in CopyFiles */,
+				D45F86CB19707A79002C8781 /* MathExtensions.h in CopyFiles */,
+				D45F86CD19707E45002C8781 /* MathExtensions.inl in CopyFiles */,
+				D45F86CC19707A81002C8781 /* GLKMathExtensions.h in CopyFiles */,
+				D45F86CE19707E47002C8781 /* GLKMathExtensions.inl in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
