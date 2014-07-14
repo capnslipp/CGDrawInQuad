@@ -13,6 +13,17 @@
 static const uint8_t kInvalidBoolValue = 0xff;
 
 
+#pragma mark Macros
+
+#define assertMessage(test, failureMessage, ...)	\
+	({	\
+		if (!(test)) {	\
+			printf("Assert! \t" failureMessage "\n", __VA_ARGS__);	\
+			assert(test);	\
+		}	\
+	})
+
+
 #pragma mark Intermediate Data
 
 /// `Aft`: Aft end
@@ -263,10 +274,15 @@ CFDataRef cgTextureMappingBlit(
 		destBufferAllocator = defaultDestBufferAllocator;
 	
 	const size_t srcByteCount = CFDataGetLength(srcData);
-	assert(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel));
+	assertMessage(srcByteCount == (srcWidth * srcHeight * kBytesPerPixel),
+		"Byte count of srcData (%zu) must equal the total src bytes (%zu; srcWidth (%d) * srcHeight (%d) * componentCount (%d)).",
+		srcByteCount, (srcWidth * srcHeight * kBytesPerPixel), srcWidth, srcHeight, tComponentCount
+	);
 	
 	const UInt8 *srcBytes = CFDataGetBytePtr(srcData);
-	assert(srcBytes != NULL);
+	assertMessage(srcBytes != NULL,
+		"Bytes of srcData must come back non-NULL.", NULL
+	);
 	struct DestImageGenInfo info = {
 		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
 		.srcSize_v2 = GLKVector2Make(srcWidth, srcHeight),
@@ -286,7 +302,9 @@ CFDataRef cgTextureMappingBlit(
 	// kinda awesome trick to check that the destBufferAllocator actually changed the value of its `out_takeOwnership` arg
 	union { bool should; uint8_t asUint8; } takeOwnership = { .asUint8 = kInvalidBoolValue };
 	UInt8 *byteBuffer = destBufferAllocator(destBufferAllocatorInfo, pixelCount, kBytesPerPixel, &takeOwnership.should);
-	assert(takeOwnership.asUint8 != kInvalidBoolValue); // you really do have to set the variable
+	assertMessage(takeOwnership.asUint8 != kInvalidBoolValue,
+		"The DestBufferAllocator callback's out_takeOwnership arg must be set before returning.", NULL
+	); // you really do have to set the variable
 	
 	for (int pixelX = destWidth - 1; pixelX >= 0; --pixelX) {
 		for (int pixelY = destHeight - 1; pixelY >= 0; --pixelY) {
@@ -312,7 +330,9 @@ inline CFDataRef cgTextureMappingBlit(int srcWidth, int srcHeight, CFDataRef src
 		case 3: return cgTextureMappingBlit<tUVMode, tSTMode, 3>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		case 4: return cgTextureMappingBlit<tUVMode, tSTMode, 4>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, destBufferAllocator, destBufferAllocatorInfo);
 		default:
-			assert(channelCount >= 1 && channelCount <= 4);
+			assertMessage(channelCount >= 1 && channelCount <= 4,
+				"The channelCount supplied (%d) is out-of-range; must be within 1 to 4.", channelCount
+			);
 			return NULL;
 	}
 }
@@ -328,7 +348,9 @@ inline CFDataRef cgTextureMappingBlit(
 		case OutsideOfTextureSTWrap: return cgTextureMappingBlit<tUVMode, OutsideOfTextureSTWrap>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfTextureSTClamp: return cgTextureMappingBlit<tUVMode, OutsideOfTextureSTClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		default:
-			assert(false); // not a valid stMode
+			assertMessage(false,
+				"The stMode supplied (%d) is not a valid OutsideOfTextureSTMode value", stMode
+			);
 			return NULL;
 	}
 }
@@ -338,7 +360,9 @@ CFDataRef cgTextureMappingBlit(int srcWidth, int srcHeight, CFDataRef srcData, i
 		case OutsideOfQuadUVClamp: return cgTextureMappingBlit<OutsideOfQuadUVClamp>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, stMode, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		case OutsideOfQuadUVSkip: return cgTextureMappingBlit<OutsideOfQuadUVSkip>(srcWidth, srcHeight, srcData, destWidth, destHeight, points, pointUVs, stMode, channelCount, destBufferAllocator, destBufferAllocatorInfo);
 		default:
-			assert(false); // not a valid uvMode
+			assertMessage(false,
+				"The uvMode supplied (%d) is not a valid OutsideOfQuadUVMode value", uvMode
+			);
 			return NULL;
 	}
 }
