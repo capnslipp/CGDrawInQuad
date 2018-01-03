@@ -1,10 +1,8 @@
-before_script:
-    - export LANG=en_US.UTF-8
 before_install:
-    - rvm get stable --auto-dotfiles
     - gem install cocoapods
 language: objective-c
 xcode_workspace: DrawInQuad.xcworkspace
 xcode_scheme:
     - DrawInQuad
     - CGTextureMapping
+osx_image: xcode9.2
