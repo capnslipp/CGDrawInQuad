@@ -284,12 +284,14 @@ CFDataRef cgTextureMappingBlit(
 		"Bytes of srcData must come back non-NULL.", NULL
 	);
 	struct DestImageGenInfo info = {
-		.srcWidth_i = srcWidth, .srcHeight_i = srcHeight,
-		.srcSize_v2 = GLKVector2Make(srcWidth, srcHeight),
-		.srcBytes = srcBytes,
-		.destSizeReciprocal_v2 = GLKVector2Make(1.0f / destWidth, 1.0f / destHeight),
-		.pointAftStar = points[0], .pointAftPort = points[1], .pointForeStar = points[2], .pointForePort = points[3],
-		.pointUV0 = pointUVs[0], .pointUV1 = pointUVs[1], .pointUV2 = pointUVs[2], .pointUV3 = pointUVs[3],
+		srcWidth, srcHeight,
+		/* srcSize_v2: */ GLKVector2Make(srcWidth, srcHeight),
+		srcBytes,
+		/* destSizeReciprocal_v2: */ GLKVector2Make(1.0f / destWidth, 1.0f / destHeight),
+		/* points union: */ { /* aftStar: */ points[0], /* aftPort: */ points[1], /* foreStar: */ points[2], /* forePort: */ points[3] },
+		/* segmentAftDelta: */ GLKVector2Invalid, /* segmentForeDelta: */ GLKVector2Invalid,
+		/* segmentAftLengthSqr: */ NAN, /* segmentForeLengthSqr: */ NAN,
+		/* pointUVs union: */ { pointUVs[0], pointUVs[1], pointUVs[2], pointUVs[3] },
 	};
 	info.segmentAftDelta = GLKVector2Subtract(info.pointAftPort, info.pointAftStar);
 	info.segmentForeDelta = GLKVector2Subtract(info.pointForePort, info.pointForeStar);
